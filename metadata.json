@@ -1,0 +1,8 @@
+{
+  "name": "Sous Couverture",
+  "description": "Jeu de déduction sociale dans un gang du crime organisé. Qui est l’Agent sous couverture qui envoie les membres en prison ? Et qui sont ses informateurs ?",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
