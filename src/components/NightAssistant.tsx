@@ -223,7 +223,12 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         <div className="inline-block px-3 py-1 rounded-full bg-transparent">
           <h1 className="text-[22px] sm:text-2xl font-black tracking-tight uppercase">{role?.nom ?? currentStep.title}</h1>
         </div>
-        <div className={`mx-auto mt-1 h-1.5 w-32 rounded-full ${roleAccent.line}`} />
+        <img
+          src="/images/ui/trait-encre-sous-titre.webp"
+          alt=""
+          aria-hidden="true"
+          className={`mx-auto mt-1 h-3 w-40 object-contain opacity-90 ${roleAccent.text}`}
+        />
         {actingPlayer && (
           <div className="mt-2 text-sm font-medium text-stone-600">
             <span className="font-black text-stone-900">{actingPlayer.name}</span>
