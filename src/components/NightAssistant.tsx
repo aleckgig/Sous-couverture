@@ -35,6 +35,18 @@ interface NightAssistantProps {
     apprentiTargetId?: string;
     gardeTargetId?: string;
     avocateTargetId?: string;
+    junkieAction?: {
+      perceivedRoleId: RoleId;
+      chimisteTargetId?: string;
+      apprentiTargetId?: string;
+      avocateTargetId?: string;
+      hackerTargetOneId?: string;
+      hackerTargetTwoId?: string;
+      agentActionType?: 'none' | 'recruit' | 'prison';
+      agentTargetId?: string;
+      recruitmentAccepted?: boolean | null;
+      imprisonedPlayerId?: string;
+    };
   }) => void;
   lastDayExecutedPlayerId?: string;
   avocatPlaidoyerActive?: boolean;
@@ -60,8 +72,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [apprentiTargetId, setApprentiTargetId] = useState<string>('');
   const [gardeTargetId, setGardeTargetId] = useState<string>('');
   const [avocateTargetId, setAvocateTargetId] = useState<string>('');
-  
-  // Agent choices
+
+  // Junkie simulation choices
+  const [junkieChimisteTargetId, setJunkieChimisteTargetId] = useState<string>('');
+  const [junkieApprentiTargetId, setJunkieApprentiTargetId] = useState<string>('');
+  const [junkieAvocateTargetId, setJunkieAvocateTargetId] = useState<string>('');
+  const [junkieHackerTargetOneId, setJunkieHackerTargetOneId] = useState<string>('');
+  const [junkieHackerTargetTwoId, setJunkieHackerTargetTwoId] = useState<string>('');
+  const [junkieAgentActionType, setJunkieAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
+  const [junkieAgentActionChosen, setJunkieAgentActionChosen] = useState(false);
+  const [junkieAgentFlowStep, setJunkieAgentFlowStep] = useState(0);
+  const [junkieAgentTargetId, setJunkieAgentTargetId] = useState('');
+  const [junkieRecruitmentAccepted, setJunkieRecruitmentAccepted] = useState<boolean | null>(null);
+  const [junkieImprisonedPlayerId, setJunkieImprisonedPlayerId] = useState<string | undefined>(undefined);
+
   const [agentActionType, setAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
   const [agentActionChosen, setAgentActionChosen] = useState(false);
   const [agentFlowStep, setAgentFlowStep] = useState(0);
@@ -101,6 +125,17 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setImprisonedPlayerId(undefined);
     setHackerTargetOneId('');
     setHackerTargetTwoId('');
+    setJunkieChimisteTargetId('');
+    setJunkieApprentiTargetId('');
+    setJunkieAvocateTargetId('');
+    setJunkieHackerTargetOneId('');
+    setJunkieHackerTargetTwoId('');
+    setJunkieAgentActionType('none');
+    setJunkieAgentActionChosen(false);
+    setJunkieAgentFlowStep(0);
+    setJunkieAgentTargetId('');
+    setJunkieRecruitmentAccepted(null);
+    setJunkieImprisonedPlayerId(undefined);
     setRevendeurCardRoleId(null);
     setNoticeMessage(null);
     localStorage.removeItem('sc_night_step_index');
@@ -123,15 +158,35 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       apprentiTargetId: apprentiTargetId || undefined,
       gardeTargetId: gardeTargetId || undefined,
       avocateTargetId: avocateTargetId || undefined,
+      ...(junkiePerceivedRoleId ? {
+        junkieAction: {
+          perceivedRoleId: junkiePerceivedRoleId,
+          chimisteTargetId: junkieChimisteTargetId || undefined,
+          apprentiTargetId: junkieApprentiTargetId || undefined,
+          avocateTargetId: junkieAvocateTargetId || undefined,
+          hackerTargetOneId: junkieHackerTargetOneId || undefined,
+          hackerTargetTwoId: junkieHackerTargetTwoId || undefined,
+          agentActionType: junkieAgentActionType,
+          agentTargetId: junkieAgentTargetId || undefined,
+          recruitmentAccepted: junkieRecruitmentAccepted,
+          imprisonedPlayerId: junkieImprisonedPlayerId,
+        }
+      } : {}),
     });
   };
 
   const currentStep = steps[currentStepIndex];
   const isFirstNight = nightCount === 1;
+  const isJunkieStep = Boolean(currentStep?.isJunkieSimulation);
+  const junkiePerceivedRoleId = isJunkieStep ? currentStep?.roleId : undefined;
   const isLastStep = currentStepIndex >= steps.length - 1;
 
   const role = currentStep ? ROLES[currentStep.roleId] : undefined;
-  const actingPlayer = currentStep ? players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner) : undefined;
+  const actingPlayer = currentStep
+    ? currentStep.activePlayerIds?.length
+      ? players.find((p) => p.id === currentStep.activePlayerIds?.[0] && p.isAlive && !p.isPrisoner)
+      : players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner)
+    : undefined;
   const isImpairedByChimiste = Boolean(actingPlayer && chimisteTargetId && actingPlayer.id === chimisteTargetId);
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const activePerturbatorRoleIds = getActivePerturbatorRoleIds(players);
