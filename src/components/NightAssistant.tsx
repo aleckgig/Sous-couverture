@@ -139,10 +139,17 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const roleAccent =
     role?.camp_initial === 'Forces de l'ordre'
-      ? { bg: 'bg-blue-50', line: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', button: 'bg-blue-700' }
+      ? { bg: 'bg-blue-50', line: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', button: 'bg-blue-700', strokePosition: '0%' }
       : role?.isPerturbateur
-        ? { bg: 'bg-purple-50', line: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200', button: 'bg-purple-700' }
-        : { bg: 'bg-red-50', line: 'bg-red-100', text: 'text-red-800', border: 'border-red-200', button: 'bg-red-700' };
+        ? { bg: 'bg-purple-50', line: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200', button: 'bg-purple-700', strokePosition: '40%' }
+        : { bg: 'bg-stone-50', line: 'bg-stone-200', text: 'text-stone-800', border: 'border-stone-300', button: 'bg-stone-800', strokePosition: '20%' };
+
+  const strokeStyle = {
+    backgroundImage: "url('/images/ui/camp-strokes-sprite.webp')",
+    backgroundSize: '100% 600%',
+    backgroundPosition: `center ${roleAccent.strokePosition}`,
+    backgroundRepeat: 'no-repeat',
+  } as React.CSSProperties;
 
   const actionLabel =
     agentFlowStep === 0 ? 'Choisissez une action' :
@@ -220,15 +227,16 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       {/* Role identity */}
       <div className="shrink-0 text-center">
         <RoleArt />
-        <div className="inline-block px-3 py-1 rounded-full bg-transparent">
-          <h1 className="text-[22px] sm:text-2xl font-black tracking-tight uppercase">{role?.nom ?? currentStep.title}</h1>
+        <div className="relative mx-auto w-fit max-w-[92%] px-3 py-1">
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 top-1/2 h-9 -translate-y-1/2 opacity-90"
+            style={strokeStyle}
+          />
+          <h1 className="relative z-10 text-[22px] sm:text-2xl font-black tracking-tight uppercase leading-tight">
+            {role?.nom ?? currentStep.title}
+          </h1>
         </div>
-        <img
-          src="/images/ui/trait-encre-sous-titre.webp"
-          alt=""
-          aria-hidden="true"
-          className={`mx-auto mt-1 h-3 w-40 object-contain opacity-90 ${roleAccent.text}`}
-        />
         {actingPlayer && (
           <div className="mt-2 text-sm font-medium text-stone-600">
             <span className="font-black text-stone-900">{actingPlayer.name}</span>
