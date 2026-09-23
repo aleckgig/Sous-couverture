@@ -10,13 +10,7 @@ import {
   Eye,
   Check,
   X,
-  Info,
-  Users,
-  Image as ImageIcon,
-  FlaskConical,
   UserRound,
-  BadgeCheck,
-  MoreHorizontal,
 } from 'lucide-react';
 import { NightStep, Player, RoleId, StructuredRole } from '../types';
 import { ROLES } from '../data/roles';
