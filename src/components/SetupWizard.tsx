@@ -867,8 +867,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                         isDragTarget || isSwapSource ? 'z-40 scale-110' : 'z-20 hover:z-30'
                       } transition-all`}
                     >
-                      <button
-                        type="button"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         data-seat-index={seatIdx}
                         draggable={true}
                         onDragStart={(e) => {
@@ -1035,7 +1036,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                             <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </button>
                         </div>
-                      </button>
+                      </div>
                     </div>
                   );
                 })}

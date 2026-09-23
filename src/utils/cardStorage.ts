@@ -80,32 +80,9 @@ const ROLE_ALIASES: Record<string, string[]> = {
   ],
   trafiquant: [
     'trafiquant',
-    'revendeur d armes',
-    'revendeur d\'armes',
-    'revendeurdarmes',
-    'revendeur_armes',
-    'revendeur',
-    'le revendeur d armes',
-    'trafiquant d armes',
-    'trafiquant d\'armes',
-    'trafiquantdarmes',
-    'trafiquant_d_armes',
-    'trafiquant_armes',
-    'le trafiquant d armes',
-    'letrafiquantdarmes',
     'le trafiquant',
     'letrafiquant',
-  ],
-  trafiquant_armes: [
-    'trafiquant d armes',
-    'trafiquant d\'armes',
-    'trafiquantdarmes',
-    'trafiquant',
-    'le trafiquant d armes',
-    'revendeur d armes',
-    'revendeur d\'armes',
-    'revendeurdarmes',
-    'le revendeur d armes',
+    'le_trafiquant',
   ],
   nettoyeur: [
     'nettoyeur',
@@ -153,18 +130,15 @@ const ROLE_ALIASES: Record<string, string[]> = {
   hacker: ['hacker', 'le hacker', 'lehacker'],
   revendeur_armes: [
     'revendeur_armes',
-    'trafiquant',
-    'le trafiquant',
-    'letrafiquant',
-    'trafiquant d armes',
-    'trafiquant d\'armes',
-    'trafiquantdarmes',
     'revendeur d armes',
     'revendeur d\'armes',
-    'revendeur',
-    'armes',
     'revendeurdarmes',
+    'revendeur',
     'le revendeur d armes',
+    'lerevendeurdarmes',
+    'le_revendeur_d_armes',
+    'le revendeur',
+    'lerevendeur',
   ],
   homme_de_main: ['homme_de_main', 'homme de main', 'hommedemain', 'l\'homme de main', 'l homme de main'],
 };
@@ -187,6 +161,24 @@ export function getLookupKeys(roleId: string): string[] {
 // Auto-migration for legacy / alternate keys in localStorage
 if (typeof window !== 'undefined' && window.localStorage) {
   try {
+    // If trafiquant and revendeur_armes cross-contaminated each other in local storage,
+    // clear the cross-contamination so each role displays its own respective card!
+    const trafVal = localStorage.getItem('card_img_trafiquant');
+    const revVal = localStorage.getItem('card_img_revendeur_armes');
+    const cleanupDone = localStorage.getItem('cleanup_cross_trafiquant_revendeur_v2');
+    if (!cleanupDone) {
+      if (trafVal && revVal && trafVal === revVal) {
+        localStorage.removeItem('card_img_trafiquant');
+        localStorage.removeItem('card_img_revendeur_armes');
+        localStorage.removeItem('card_img_revendeur d armes');
+        localStorage.removeItem('card_img_revendeurdarmes');
+        localStorage.removeItem('card_img_le trafiquant');
+        localStorage.removeItem('card_img_letrafiquant');
+        localStorage.removeItem('card_img_trafiquant_armes');
+      }
+      localStorage.setItem('cleanup_cross_trafiquant_revendeur_v2', 'true');
+    }
+
     const keysToCheck = Object.keys(ROLE_ALIASES);
     for (const mainKey of keysToCheck) {
       const candidates = getLookupKeys(mainKey);

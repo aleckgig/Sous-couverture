@@ -117,6 +117,13 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
       } catch {}
 
       for (const role of ALL_ROLES_LIST) {
+        if (role.id === 'trafiquant' && (normFileName.includes('arme') || normFileName.includes('revendeur'))) {
+          continue;
+        }
+        if (role.id === 'revendeur_armes' && normFileName.includes('trafiquant')) {
+          continue;
+        }
+
         const candidateKeys = getLookupKeys(role.id);
         const normNom = role.nom
           .toLowerCase()
@@ -174,6 +181,13 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
             .replace(/[^a-z0-9]/g, '');
 
           for (const role of ALL_ROLES_LIST) {
+            if (role.id === 'trafiquant' && (normFileName.includes('arme') || normFileName.includes('revendeur'))) {
+              continue;
+            }
+            if (role.id === 'revendeur_armes' && normFileName.includes('trafiquant')) {
+              continue;
+            }
+
             const candidateKeys = getLookupKeys(role.id);
             const normNom = role.nom
               .toLowerCase()
@@ -220,6 +234,13 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
           .replace(/[^a-z0-9]/g, '');
 
         for (const role of ALL_ROLES_LIST) {
+          if (role.id === 'trafiquant' && (normKey.includes('arme') || normKey.includes('revendeur'))) {
+            continue;
+          }
+          if (role.id === 'revendeur_armes' && normKey.includes('trafiquant')) {
+            continue;
+          }
+
           const candidates = getLookupKeys(role.id);
           const isMatch = candidates.some((cand) => {
             const normCand = cand

@@ -59,14 +59,22 @@ export function getAllUploadedImages(): ImageAsset[] {
 export function getRoleCardImageUrl(roleId: string): string | null {
   const allImages = getAllUploadedImages();
 
-  // 1. Direct mapping via DEFAULT_ROLE_IMAGE_MAP
+  // 1. Direct mapping via DEFAULT_ROLE_IMAGE_MAP & explicit known filenames
   const lookupKey = roleId.toLowerCase().trim();
   const defaultMappedFile = DEFAULT_ROLE_IMAGE_MAP[roleId] || DEFAULT_ROLE_IMAGE_MAP[lookupKey];
-  if (defaultMappedFile) {
+  const priorityFiles: string[] = [];
+  if (defaultMappedFile) priorityFiles.push(defaultMappedFile);
+  if (roleId === 'revendeur_armes') {
+    priorityFiles.push('Revendeur d armes.png', 'revendeur_armes.png');
+  } else if (roleId === 'trafiquant') {
+    priorityFiles.push('Trafiquant.png', 'trafiquant.png');
+  }
+
+  for (const file of priorityFiles) {
     const matched = allImages.find(
       (img) =>
-        img.filename.toLowerCase() === defaultMappedFile.toLowerCase() ||
-        normalize(img.filename) === normalize(defaultMappedFile)
+        img.filename.toLowerCase() === file.toLowerCase() ||
+        normalize(img.filename) === normalize(file)
     );
     if (matched) return matched.url;
   }
@@ -104,6 +112,12 @@ export function getRoleCardImageUrl(roleId: string): string | null {
   }
 
   // 4. Fallback to public images
+  if (roleId === 'revendeur_armes') {
+    return '/images/Revendeur d armes.png';
+  }
+  if (roleId === 'trafiquant') {
+    return '/images/Trafiquant.png';
+  }
   if (defaultMappedFile) {
     return `/images/${defaultMappedFile}`;
   }
