@@ -331,7 +331,7 @@ export default function App() {
             ? { ...p, isInformationPoisoned: true, isPoisoned: true }
             : p
         );
-        addLog(\`🧪 Le Junkie a appliqué le pouvoir du Chimiste sur \${players.find(p => p.id === junkieAction.chimisteTargetId)?.name ?? 'une cible'}.\`, 'action');
+        addLog(`🧪 Le Junkie a appliqué le pouvoir du Chimiste sur ${players.find(p => p.id === junkieAction.chimisteTargetId)?.name ?? 'une cible'}.`, 'action');
       }
       if (junkieAction.perceivedRoleId === 'avocat_vereux' && junkieAction.avocateTargetId) {
         updatedPlayers = updatedPlayers.map(p =>
@@ -339,7 +339,7 @@ export default function App() {
             ? { ...p, isProtected: true }
             : p
         );
-        addLog(\`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur \${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.\`, 'protection');
+        addLog(`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur ${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.`, 'protection');
       }
     }
 
@@ -421,7 +421,7 @@ export default function App() {
               updatedPlayers = updatedPlayers.map(p =>
                 p.id === target.id ? { ...p, isInformateur: true, currentTeam: 'Forces de l\'ordre' } : p
               );
-              addLog(\`👮 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : \${target.name} devient Informateur.\`, 'recruitment');
+              addLog(`👮 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : ${target.name} devient Informateur.`, 'recruitment');
             }
           }
           if (junkieAction.agentActionType === 'prison' && target) {
@@ -435,7 +435,7 @@ export default function App() {
               updatedPlayers = updatedPlayers.map(p =>
                 p.id === target.id ? { ...p, isPrisoner: true } : p
               );
-              addLog(\`🚔 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : \${target.name} est envoyé en prison.\`, 'prison');
+              addLog(`🚔 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : ${target.name} est envoyé en prison.`, 'prison');
             }
           }
           break;
