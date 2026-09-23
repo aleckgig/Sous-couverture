@@ -526,7 +526,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-dvh bg-[#f5f1e8] text-stone-900 flex flex-col font-sans antialiased selection:bg-amber-200 selection:text-stone-950">
       {/* Header */}
       <Header
         gamePhase={gamePhase}
@@ -554,7 +554,7 @@ export default function App() {
       />
 
       {/* Main Content View Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+      <main className={`flex-1 w-full mx-auto px-3 sm:px-4 ${gamePhase === "night" || gamePhase === "day" ? "max-w-2xl py-2 overflow-hidden h-[calc(100dvh-57px)]" : "max-w-7xl py-3 md:py-6"}`}>
         {/* Setup Phase */}
         {(gamePhase === 'setup_player_count' ||
           gamePhase === 'setup_roles' ||

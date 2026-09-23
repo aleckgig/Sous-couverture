@@ -27,6 +27,7 @@ import {
   canPrisonerInformantsParticipateInAvocate,
 } from '../utils/rulesConfig';
 import { RoleCardModal } from './RoleCardModal';
+import { PlayerSelect } from './PlayerSelect';
 import { ValidationAlertModal } from './ValidationAlertModal';
 
 interface NightAssistantProps {
@@ -237,22 +238,22 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 animate-in fade-in duration-150 text-stone-100">
+    <div className="h-full flex flex-col animate-in fade-in duration-150 text-stone-900">
       {/* Main Single-Screen Night Step Card */}
-      <div className="bg-stone-900 border-2 border-indigo-500/40 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5">
+      <div className="h-full min-h-0 flex flex-col bg-transparent space-y-2">
         {/* Step Progress & Role Badge */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-800 pb-4 overflow-hidden">
+        <div className="shrink-0 flex items-center justify-between gap-3 border-b border-stone-200 pb-2 overflow-hidden">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-950 border border-indigo-500/50 flex items-center justify-center text-xl sm:text-2xl shadow shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-stone-900 flex items-center justify-center text-white shadow shrink-0">
               {currentStep.roleId === 'agent_sous_couverture' ? (
                 '👮🏻‍♂️'
               ) : (
-                <Moon className="w-5 h-5 text-indigo-400" />
+                <Moon className="w-4 h-4 text-white" />
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-black uppercase tracking-wider text-indigo-400">
+                <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
                   Nuit {nightCount} • Étape {currentStepIndex + 1}/{steps.length}
                 </span>
                 <span
@@ -271,11 +272,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                 )}
               </div>
               <div className="mt-0.5 flex items-center gap-2 flex-wrap">
-                <h2 className="font-serif font-black text-xl sm:text-2xl md:text-3xl text-white tracking-wide leading-tight">
+                <h2 className="font-black text-lg text-stone-900 tracking-tight leading-tight">
                   {currentStep.title}
                 </h2>
                 {actingPlayer && (
-                  <span className="text-sm sm:text-base font-bold text-amber-300 bg-stone-950/90 px-2.5 py-0.5 rounded-xl border border-amber-500/30">
+                  <span className="text-xs font-bold text-stone-600 bg-white px-2 py-1 rounded-lg border border-stone-200">
                     👤 {actingPlayer.name}
                   </span>
                 )}
@@ -285,18 +286,18 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         </div>
 
         {/* Storyteller Instructions Box */}
-        <div className="bg-stone-950/95 border-2 border-amber-500/50 rounded-2xl p-4 sm:p-5 shadow-lg space-y-2">
-          <div className="flex items-center gap-2 border-b border-amber-500/30 pb-2">
+        <div className="shrink-0 bg-white border border-stone-200 rounded-2xl p-3 shadow-sm space-y-1.5">
+          <div className="flex items-center gap-2 border-b border-stone-100 pb-1.5">
             <span className="text-base">📜</span>
-            <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-amber-400">
+            <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
               CONSIGNE DU CONTEUR
             </span>
           </div>
-          <p className="text-sm sm:text-base text-stone-100 font-medium leading-relaxed">
+          <p className="text-sm text-stone-800 font-semibold leading-snug">
             {currentStep.instruction}
           </p>
           {currentStep.reminder && (
-            <p className="text-xs text-amber-200/80 italic pt-1">
+            <p className="text-[11px] text-stone-500 italic pt-1">
               💡 {currentStep.reminder}
             </p>
           )}
@@ -304,13 +305,13 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
         {/* Chimiste Poison/Falsification Warning */}
         {isImpairedByChimiste && (
-          <div className="bg-red-950/80 border-2 border-red-500 rounded-2xl p-4 flex items-start gap-3 shadow-lg animate-pulse">
+          <div className="shrink-0 bg-red-50 border border-red-200 rounded-xl p-2.5 flex items-start gap-2">
             <AlertTriangle className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-sm font-black text-red-200 uppercase tracking-wide">
+              <h4 className="text-[11px] font-black text-red-800 uppercase tracking-wide">
                 ⚠️ Information Falsifiée par le Chimiste !
               </h4>
-              <p className="text-xs text-red-300 mt-1 leading-relaxed">
+              <p className="text-[10px] text-red-700 mt-0.5 leading-snug">
                 Le Chimiste a ciblé ce joueur cette nuit. L'information que vous devez lui transmettre <strong>DOIT ÊTRE FAUSSE</strong> (mentez ou donnez un résultat erroné). Ne lui révélez pas qu'il a été altéré !
               </p>
             </div>
@@ -318,310 +319,125 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         )}
 
         {/* --- STEP SPECIFIC ACTIONS --- */}
-        <div className="space-y-4 pt-2">
-          {/* 1. CHIMISTE */}
+        <div className="flex-1 min-h-0 overflow-y-auto py-1 space-y-2 overscroll-contain">
+          {/* ACTIONS COMPACTES — une décision à la fois */}
           {currentStep.roleId === 'chimiste' && (
-            <div className="bg-stone-950 border border-purple-500/40 rounded-2xl p-4 space-y-3">
-              <span className="text-xs font-black text-purple-300 uppercase tracking-wider block">
-                🧪 Cible du Chimiste pour cette nuit :
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {players
-                  .filter((p) => p.isAlive && !p.isPrisoner)
-                  .map((p) => {
-                    const isSelected = chimisteTargetId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setChimisteTargetId(isSelected ? '' : p.id);
-                          setNoticeMessage(
-                            isSelected ? null : `L'information de ${p.name} sera faussée cette nuit.`
-                          );
-                        }}
-                        className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-between gap-1 border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-purple-900 border-purple-400 text-purple-100 ring-2 ring-purple-400/40'
-                            : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                        }`}
-                      >
-                        <span className="truncate">{p.name}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-purple-300 shrink-0" />}
-                      </button>
-                    );
-                  })}
-              </div>
+            <div className="rounded-2xl border border-purple-200 bg-purple-50 p-3 space-y-2">
+              <div className="text-xs font-black uppercase tracking-wider text-purple-700">Cible du Chimiste</div>
+              <PlayerSelect
+                value={chimisteTargetId}
+                onChange={(id) => {
+                  setChimisteTargetId(id);
+                  const target = players.find((p) => p.id === id);
+                  setNoticeMessage(target ? `Les informations de ${target.name} seront faussées cette nuit.` : null);
+                }}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                placeholder="Choisir un joueur…"
+                accent="purple"
+              />
             </div>
           )}
 
-          {/* 2. APPRENTI */}
           {currentStep.roleId === 'apprenti' && (
-            <div className="bg-stone-950 border border-sky-500/40 rounded-2xl p-4 space-y-3">
-              <span className="text-xs font-black text-sky-300 uppercase tracking-wider block">
-                🎯 Cible désignée par l'Apprenti (vote lié demain) :
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {players
-                  .filter((p) => p.isAlive && !p.isPrisoner && p.id !== actingPlayer?.id)
-                  .map((p) => {
-                    const isSelected = apprentiTargetId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setApprentiTargetId(isSelected ? '' : p.id);
-                          setNoticeMessage(
-                            isSelected ? null : `Demain, l'Apprenti devra voter comme ${p.name}.`
-                          );
-                        }}
-                        className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-between gap-1 border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-sky-900 border-sky-400 text-sky-100 ring-2 ring-sky-400/40'
-                            : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                        }`}
-                      >
-                        <span className="truncate">{p.name}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-sky-300 shrink-0" />}
-                      </button>
-                    );
-                  })}
-              </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50 p-3 space-y-2">
+              <div className="text-xs font-black uppercase tracking-wider text-sky-700">Joueur que l’Apprenti doit suivre demain</div>
+              <PlayerSelect
+                value={apprentiTargetId}
+                onChange={(id) => {
+                  setApprentiTargetId(id);
+                  const target = players.find((p) => p.id === id);
+                  setNoticeMessage(target ? `L’Apprenti devra voter comme ${target.name} demain.` : null);
+                }}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                excludePlayerId={actingPlayer?.id}
+                placeholder="Choisir un joueur…"
+                accent="blue"
+              />
             </div>
           )}
 
-          {/* 3. GARDE DU CORPS */}
-          {currentStep.roleId === 'garde_du_corps' && (
-            <div className="bg-stone-950 border border-amber-500/40 rounded-2xl p-4 space-y-3">
-              <span className="text-xs font-black text-amber-300 uppercase tracking-wider block">
-                🛡️ Joueur protégé contre la prison cette nuit :
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {players
-                  .filter((p) => p.isAlive && !p.isPrisoner && p.id !== actingPlayer?.id)
-                  .map((p) => {
-                    const isSelected = gardeTargetId === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setGardeTargetId(isSelected ? '' : p.id);
-                          setNoticeMessage(
-                            isSelected ? null : `${p.name} est protégé contre la prison cette nuit.`
-                          );
-                        }}
-                        className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-between gap-1 border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-amber-900 border-amber-400 text-amber-100 ring-2 ring-amber-400/40'
-                            : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                        }`}
-                      >
-                        <span className="truncate">{p.name}</span>
-                        {isSelected && <Shield className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* 4. AGENT SOUS COUVERTURE */}
           {currentStep.roleId === 'agent_sous_couverture' && (
-            <div className="bg-stone-950 border-2 border-blue-500/60 rounded-2xl p-4 sm:p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-blue-300 uppercase tracking-wider">
-                  🕵️ Choix de l'Agent sous couverture :
-                </span>
-                {isFirstNight && (
-                  <span className="text-[10px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/40">
-                    Prison désactivée (Nuit 1)
-                  </span>
-                )}
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 space-y-3">
+              <div className="text-xs font-black uppercase tracking-wider text-blue-700 flex items-center justify-between gap-2">
+                <span>Action de l’Agent</span>
+                {isFirstNight && <span className="text-[9px] normal-case tracking-normal bg-white border border-blue-200 rounded-full px-2 py-1">Nuit 1 : recrutement seulement</span>}
               </div>
 
-              {/* Action type buttons */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAgentActionType('recruit');
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => {
+                  setAgentActionType('recruit');
+                  setAgentTargetId('');
+                  setRecruitmentAcceptedTonight(null);
+                }} className={`py-2.5 rounded-xl border text-xs font-black transition ${agentActionType === 'recruit' ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-stone-700 border-blue-200'}`}>
+                  Recruter
+                </button>
+                {!isFirstNight ? (
+                  <button type="button" onClick={() => {
+                    setAgentActionType('prison');
                     setAgentTargetId('');
                     setRecruitmentAcceptedTonight(null);
-                  }}
-                  className={`p-3 rounded-xl font-bold text-xs flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                    agentActionType === 'recruit'
-                      ? 'bg-blue-900 border-blue-400 text-blue-100 ring-2 ring-blue-400/50'
-                      : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                  }`}
-                >
-                  <span className="text-base">🤝</span>
-                  <span>Recruter un membre</span>
-                </button>
-
-                {!isFirstNight && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAgentActionType('prison');
-                      setAgentTargetId('');
-                      setRecruitmentAcceptedTonight(null);
-                    }}
-                    className={`p-3 rounded-xl font-bold text-xs flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                      agentActionType === 'prison'
-                        ? 'bg-red-900 border-red-400 text-red-100 ring-2 ring-red-400/50'
-                        : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                    }`}
-                  >
-                    <span className="text-base">🚔</span>
-                    <span>Envoyer en prison</span>
+                  }} className={`py-2.5 rounded-xl border text-xs font-black transition ${agentActionType === 'prison' ? 'bg-red-700 text-white border-red-700' : 'bg-white text-stone-700 border-blue-200'}`}>
+                    Envoyer en prison
                   </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
+                ) : (
+                  <button type="button" onClick={() => {
                     setAgentActionType('none');
                     setAgentTargetId('');
                     setRecruitmentAcceptedTonight(null);
-                  }}
-                  className={`p-3 rounded-xl font-bold text-xs flex flex-col items-center gap-1 border transition-all cursor-pointer ${
-                    agentActionType === 'none'
-                      ? 'bg-stone-800 border-stone-500 text-stone-100 ring-2 ring-stone-500/40'
-                      : 'bg-stone-900 border-stone-800 text-stone-400 hover:border-stone-700'
-                  }`}
-                >
-                  <span className="text-base">🛑</span>
-                  <span>Ne rien faire</span>
-                </button>
+                  }} className={`py-2.5 rounded-xl border text-xs font-black transition ${agentActionType === 'none' ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-700 border-blue-200'}`}>
+                    Ne rien faire
+                  </button>
+                )}
               </div>
 
-              {/* RECRUIT MODE */}
               {agentActionType === 'recruit' && (
-                <div className="pt-2 border-t border-stone-800 space-y-3">
-                  <span className="text-xs font-bold text-stone-300 block">
-                    1. Sélectionner le membre du Gang à approcher :
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {players
-                      .filter(
-                        (p) =>
-                          p.isAlive &&
-                          !p.isPrisoner &&
-                          p.currentTeam === 'Gang' &&
-                          p.roleId !== 'agent_sous_couverture' &&
-                          !p.isInformateur &&
-                          getInformantsCount(players) < 2
-                      )
-                      .map((p) => {
-                        const isSelected = agentTargetId === p.id;
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              setAgentTargetId(p.id);
-                              setRecruitmentAcceptedTonight(null);
-                            }}
-                            className={`p-2.5 rounded-xl font-bold text-xs text-left border transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-blue-900 border-blue-400 text-blue-100 ring-2 ring-blue-400/40'
-                                : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                            }`}
-                          >
-                            <span className="truncate block font-bold">
-                              {p.name}
-                              {p.isPrisoner && (
-                                <span className="ml-1 text-[9px] px-1 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40 font-bold">
-                                  🚔 En cellule
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-[10px] text-stone-400 block font-normal">
-                              {ROLES[p.roleId]?.nom}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
-
+                <div className="space-y-2">
+                  <PlayerSelect
+                    value={agentTargetId}
+                    onChange={(id) => {
+                      setAgentTargetId(id);
+                      setRecruitmentAcceptedTonight(null);
+                    }}
+                    players={players.filter((p) =>
+                      p.isAlive &&
+                      !p.isPrisoner &&
+                      p.currentTeam === 'Gang' &&
+                      !p.isInformateur &&
+                      p.roleId !== 'agent_sous_couverture' &&
+                      getInformantsCount(players) < 2
+                    )}
+                    placeholder={getInformantsCount(players) >= 2 ? 'Maximum de 2 Informateurs atteint' : 'Choisir un membre du Gang…'}
+                    accent="blue"
+                  />
                   {agentTargetId && (
-                    <div className="bg-stone-900 p-3.5 rounded-xl border border-stone-800 space-y-3 animate-in fade-in">
-                      {/* Check if target is Homme de main */}
-                      {players.find((p) => p.id === agentTargetId)?.roleId === 'homme_de_main' ? (
-                        <div className="p-2.5 bg-amber-950/60 border border-amber-500 rounded-xl text-xs text-amber-200 space-y-1">
-                          <p className="font-bold">⚠️ Règle spéciale de l'Homme de main :</p>
-                          <p>
-                            L'Homme de main ne peut <strong>JAMAIS</strong> accepter un recrutement. Il a l'obligation stricte de refuser !
-                          </p>
-                        </div>
-                      ) : null}
-
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-stone-200">
-                          2. Réponse secrète de {players.find((p) => p.id === agentTargetId)?.name} :
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRecruitmentAcceptedTonight(true);
-                              const targetPlayer = players.find((p) => p.id === agentTargetId);
-                              if (targetPlayer && !isImpairedByChimiste && targetPlayer.roleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
-                                onUpdatePlayer({
-                                  ...targetPlayer,
-                                  isInformateur: true,
-                                  currentTeam: 'Forces de l\'ordre',
-                                });
-                              }
-                            }}
-                            className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
-                              recruitmentAcceptedTonight === true
-                                ? 'bg-emerald-900 border-emerald-400 text-emerald-100 ring-2 ring-emerald-400/50'
-                                : 'bg-stone-950 border-stone-700 text-stone-300 hover:border-emerald-600'
-                            }`}
-                          >
-                            <Check className="w-4 h-4 text-emerald-400" />
-                            <span>✅ A accepté le recrutement</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRecruitmentAcceptedTonight(false);
-                              const targetPlayer = players.find((p) => p.id === agentTargetId);
-                              if (targetPlayer) {
-                                onUpdatePlayer({
-                                  ...targetPlayer,
-                                  isInformateur: false,
-                                  currentTeam: 'Gang',
-                                });
-                              }
-                            }}
-                            className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
-                              recruitmentAcceptedTonight === false
-                                ? 'bg-red-900 border-red-400 text-red-100 ring-2 ring-red-400/50'
-                                : 'bg-stone-950 border-stone-700 text-stone-300 hover:border-red-600'
-                            }`}
-                          >
-                            <X className="w-4 h-4 text-red-400" />
-                            <span>❌ A refusé</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {recruitmentAcceptedTonight === true && (
-                        <div className="p-2.5 bg-emerald-950/80 border border-emerald-500 rounded-xl text-xs text-emerald-200">
-                          👮 <strong>Succès :</strong> Le joueur devient un <strong>Informateur</strong> (Forces de l'ordre) !{' '}
-                          {players.find((p) => p.id === agentTargetId)?.isPrisoner
-                            ? 'Accord en cellule réussi : le détenu a accepté de coopérer avec la police !'
-                            : 'Montrez-lui secrètement l\'identité de l\'Agent sous couverture.'}
+                    <div className="rounded-xl bg-white border border-blue-100 p-3 space-y-2">
+                      {players.find((p) => p.id === agentTargetId)?.roleId === 'homme_de_main' && (
+                        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                          Homme de main : refus obligatoire.
                         </div>
                       )}
-                      {recruitmentAcceptedTonight === false && (
-                        <div className="p-2.5 bg-stone-950 border border-stone-700 rounded-xl text-xs text-stone-400">
-                          Le joueur a refusé. Il reste membre du Gang. L'Agent ne peut plus rien faire cette nuit.
+                      <div className="text-[11px] font-bold text-stone-600">Réponse secrète du joueur</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => {
+                          setRecruitmentAcceptedTonight(true);
+                          const targetPlayer = players.find((p) => p.id === agentTargetId);
+                          if (targetPlayer && !isImpairedByChimiste && targetPlayer.roleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
+                            onUpdatePlayer({ ...targetPlayer, isInformateur: true, currentTeam: 'Forces de l\'ordre' });
+                          }
+                        }} className={`py-2.5 rounded-xl border text-xs font-black ${recruitmentAcceptedTonight === true ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-emerald-700 border-emerald-200'}`}>
+                          A accepté
+                        </button>
+                        <button type="button" onClick={() => {
+                          setRecruitmentAcceptedTonight(false);
+                          const targetPlayer = players.find((p) => p.id === agentTargetId);
+                          if (targetPlayer) onUpdatePlayer({ ...targetPlayer, isInformateur: false, currentTeam: 'Gang' });
+                        }} className={`py-2.5 rounded-xl border text-xs font-black ${recruitmentAcceptedTonight === false ? 'bg-red-700 text-white border-red-700' : 'bg-white text-red-700 border-red-200'}`}>
+                          A refusé
+                        </button>
+                      </div>
+                      {recruitmentAcceptedTonight === true && (
+                        <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                          Recrutement accepté. Montrez secrètement l’identité de l’Agent au joueur.
                         </div>
                       )}
                     </div>
@@ -629,169 +445,105 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                 </div>
               )}
 
-              {/* PRISON MODE */}
               {agentActionType === 'prison' && !isFirstNight && (
-                <div className="pt-2 border-t border-stone-800 space-y-3">
-                  <span className="text-xs font-bold text-stone-300 block">
-                    Sélectionner le joueur à envoyer en prison :
-                  </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {players
-                      .filter((p) => p.isAlive && !p.isPrisoner && p.roleId !== 'agent_sous_couverture')
-                      .map((p) => {
-                        const isSelected = agentTargetId === p.id;
-                        const isProtected = gardeTargetId === p.id;
-                        const isChauffeur = p.roleId === 'chauffeur';
-                        const isCaid = p.roleId === 'caid';
-                        const caidImmune = isCaid && isCaidImmuneToPrison();
-                        return (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              setAgentTargetId(p.id);
-                              if (isImpairedByChimiste) {
-                                setNoticeMessage(`⚠️ L'Agent est empoisonné : il croit que l'arrestation a fonctionné, mais elle échoue.`);
-                                setImprisonedPlayerId(undefined);
-                              } else if (isChauffeur) {
-                                setNoticeMessage(`🛑 Le Chauffeur (${p.name}) est immunisé contre la prison ! L'arrestation échoue.`);
-                                setImprisonedPlayerId(undefined);
-                              } else if (caidImmune) {
-                                setNoticeMessage(`🛑 Le Caïd (${p.name}) bénéficie d'une immunité totale selon vos règles d'arbitrage ! L'arrestation échoue.`);
-                                setImprisonedPlayerId(undefined);
-                              } else if (isProtected) {
-                                setNoticeMessage(`🛑 ${p.name} a été protégé par le Garde du corps cette nuit ! L'arrestation échoue.`);
-                                setImprisonedPlayerId(undefined);
-                              } else {
-                                setNoticeMessage(`👮 ${p.name} est envoyé en prison.`);
-                                setImprisonedPlayerId(p.id);
-                                onUpdatePlayer({ ...p, isPrisoner: true });
-                              }
-                            }}
-                            className={`p-2.5 rounded-xl font-bold text-xs text-left border transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-red-900 border-red-400 text-red-100 ring-2 ring-red-400/40'
-                                : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                            }`}
-                          >
-                            <span className="truncate block font-bold">{p.name}</span>
-                            <span className="text-[10px] text-stone-400 block font-normal">
-                              {ROLES[p.roleId]?.nom}
-                            </span>
-                          </button>
-                        );
-                      })}
-                  </div>
+                <PlayerSelect
+                  value={agentTargetId}
+                  onChange={(id) => {
+                    setAgentTargetId(id);
+                    const target = players.find((p) => p.id === id);
+                    if (!target) {
+                      setImprisonedPlayerId(undefined);
+                      return;
+                    }
+                    if (isImpairedByChimiste) {
+                      setNoticeMessage('L’Agent est empoisonné : il croit que l’arrestation réussit, mais elle échoue.');
+                      setImprisonedPlayerId(undefined);
+                    } else if (target.roleId === 'chauffeur') {
+                      setNoticeMessage(`Le Chauffeur (${target.name}) est immunisé contre la prison.`);
+                      setImprisonedPlayerId(undefined);
+                    } else {
+                      setNoticeMessage(`${target.name} sera envoyé en prison.`);
+                      setImprisonedPlayerId(target.id);
+                    }
+                  }}
+                  players={players.filter((p) => p.isAlive && !p.isPrisoner && p.roleId !== 'agent_sous_couverture' && !p.isInformateur)}
+                  placeholder="Choisir un joueur à envoyer en prison…"
+                  accent="red"
+                />
+              )}
+
+              {agentActionType === 'none' && (
+                <div className="text-xs text-stone-500 bg-white/70 rounded-xl p-2.5 border border-blue-100">
+                  Aucune action cette nuit.
                 </div>
               )}
             </div>
           )}
 
-          {/* 5. L'AVOCATE */}
           {currentStep.roleId === 'avocat_vereux' && (
-            <div className="bg-stone-950 border border-blue-500/40 rounded-2xl p-4 space-y-3">
-              <span className="text-xs font-black text-blue-300 uppercase tracking-wider block">
-                🛡️ Protection contre la prison
-              </span>
-              <p className="text-xs text-stone-300">
-                Choisissez 1 joueur. Cette personne ne pourra pas être envoyée en prison cette nuit.
-              </p>
-              <select
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 space-y-2">
+              <div className="text-xs font-black uppercase tracking-wider text-blue-700">Protection contre la prison</div>
+              <PlayerSelect
                 value={avocateTargetId}
-                onChange={(e) => {
-                  setAvocateTargetId(e.target.value);
-                  const target = players.find(p => p.id === e.target.value);
-                  if (target) setNoticeMessage(`${target.name} est protégé contre la prison cette nuit.`);
+                onChange={(id) => {
+                  setAvocateTargetId(id);
+                  const target = players.find((p) => p.id === id);
+                  setNoticeMessage(target ? `${target.name} est protégé contre la prison cette nuit.` : null);
                 }}
-                className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3 py-3 text-sm text-white"
-              >
-                <option value="">— Choisir un joueur —</option>
-                {players.filter(p => p.isAlive && !p.isPrisoner && p.id !== actingPlayer?.id).map(p => (
-                  <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
-                ))}
-              </select>
-              {avocateTargetId && (
-                <div className="text-xs text-blue-200 bg-blue-950/60 border border-blue-500/40 rounded-xl p-3">
-                  {players.find(p => p.id === avocateTargetId)?.name} sera protégé contre la prison.
-                  {isImpairedByChimiste && ' ⚠️ Mais l’Avocate est empoisonnée : sa protection échouera.'}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                excludePlayerId={actingPlayer?.id}
+                placeholder="Choisir un joueur à protéger…"
+                accent="blue"
+              />
+              {avocateTargetId && isImpairedByChimiste && (
+                <div className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg p-2">
+                  L’Avocate est empoisonnée : sa protection échouera.
                 </div>
               )}
             </div>
           )}
 
-          {/* 6. HACKER */}
           {currentStep.roleId === 'hacker' && (
-            <div className="bg-stone-950 border border-indigo-500/50 rounded-2xl p-4 space-y-4">
-              <span className="text-xs font-black text-indigo-300 uppercase tracking-wider block">
-                💻 Sélectionner les 2 joueurs désignés par le Hacker :
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {players
-                  .filter((p) => p.isAlive && !p.isPrisoner && p.id !== actingPlayer?.id)
-                  .map((p) => {
-                    const is1 = hackerTargetOneId === p.id;
-                    const is2 = hackerTargetTwoId === p.id;
-                    const isSelected = is1 || is2;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          if (is1) setHackerTargetOneId('');
-                          else if (is2) setHackerTargetTwoId('');
-                          else if (!hackerTargetOneId) setHackerTargetOneId(p.id);
-                          else if (!hackerTargetTwoId) setHackerTargetTwoId(p.id);
-                        }}
-                        className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-between gap-1 border transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-indigo-900 border-indigo-400 text-indigo-100 ring-2 ring-indigo-400/40'
-                            : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700'
-                        }`}
-                      >
-                        <span className="truncate">{p.name}</span>
-                        {isSelected && (
-                          <span className="text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded-full font-black">
-                            {is1 ? '1' : '2'}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+            <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-3 space-y-2">
+              <div className="text-xs font-black uppercase tracking-wider text-indigo-700">Deux joueurs désignés par le Hacker</div>
+              <div className="grid grid-cols-2 gap-2">
+                <PlayerSelect
+                  value={hackerTargetOneId}
+                  onChange={(id) => {
+                    setHackerTargetOneId(id);
+                    if (id === hackerTargetTwoId) setHackerTargetTwoId('');
+                  }}
+                  players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                  excludePlayerId={actingPlayer?.id}
+                  placeholder="1er joueur…"
+                  accent="purple"
+                />
+                <PlayerSelect
+                  value={hackerTargetTwoId}
+                  onChange={(id) => setHackerTargetTwoId(id)}
+                  players={players.filter((p) => p.isAlive && !p.isPrisoner && p.id !== hackerTargetOneId)}
+                  excludePlayerId={actingPlayer?.id}
+                  placeholder="2e joueur…"
+                  accent="purple"
+                />
               </div>
-
               {hackerTargetOneId && hackerTargetTwoId && (
-                <div className="pt-2 border-t border-stone-800">
+                <div className="rounded-xl bg-white border border-indigo-100 p-3 flex items-center justify-between gap-3">
                   {(() => {
                     const p1 = players.find((p) => p.id === hackerTargetOneId);
                     const p2 = players.find((p) => p.id === hackerTargetTwoId);
-                    const hasAgentOrFaussePiste =
-                      p1?.roleId === 'agent_sous_couverture' ||
-                      p1?.isFaussePiste ||
-                      p2?.roleId === 'agent_sous_couverture' ||
-                      p2?.isFaussePiste;
-
-                    const finalResponse = isImpairedByChimiste
-                      ? !hasAgentOrFaussePiste
-                      : hasAgentOrFaussePiste;
-
+                    const hasAgentOrFaussePiste = Boolean(
+                      p1?.roleId === 'agent_sous_couverture' || p1?.isFaussePiste ||
+                      p2?.roleId === 'agent_sous_couverture' || p2?.isFaussePiste
+                    );
+                    const finalResponse = isImpairedByChimiste ? !hasAgentOrFaussePiste : hasAgentOrFaussePiste;
                     return (
-                      <div className="bg-stone-900 p-4 rounded-xl border border-stone-800 flex items-center justify-between gap-3 shadow">
-                        <div>
-                          <span className="text-xs text-stone-400 block">
-                            Signe de tête à faire au Hacker :
-                          </span>
-                          <span
-                            className={`text-2xl font-serif font-black ${
-                              finalResponse ? 'text-emerald-400' : 'text-red-400'
-                            }`}
-                          >
-                            {finalResponse ? 'OUI (de la tête)' : 'NON (de la tête)'}
-                          </span>
-                        </div>
-                        <div className="text-right text-[11px] text-stone-400">
-                          <span>{p1?.name} & {p2?.name}</span>
-                        </div>
-                      </div>
+                      <>
+                        <span className="text-xs text-stone-500">Signe à faire au Hacker</span>
+                        <span className={`text-xl font-black ${finalResponse ? 'text-emerald-700' : 'text-red-700'}`}>
+                          {finalResponse ? 'OUI' : 'NON'}
+                        </span>
+                      </>
                     );
                   })()}
                 </div>
@@ -843,7 +595,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
         {/* Notice Message */}
         {noticeMessage && (
-          <div className="p-3 bg-stone-950 border border-amber-500/40 rounded-xl text-xs text-amber-300 font-medium flex items-center justify-between gap-2 shadow">
+          <div className="shrink-0 p-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 font-medium flex items-center justify-between gap-2">
             <span>{noticeMessage}</span>
             <button
               type="button"
@@ -872,19 +624,19 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         />
 
         {/* Navigation Step Buttons */}
-        <div className="flex items-center justify-between gap-2 sm:gap-3 pt-4 border-t border-stone-800">
+        <div className="shrink-0 flex items-center justify-between gap-2 pt-2 border-t border-stone-200">
           <button
             type="button"
             onClick={handlePrevStep}
             disabled={currentStepIndex === 0}
-            className="px-3 sm:px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-white hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed text-stone-600 font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer border border-stone-200"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Précédent</span>
           </button>
 
           <div className="flex items-center gap-2 text-center">
-            <span className="text-xs text-stone-400 font-mono">
+            <span className="text-[10px] text-stone-400 font-mono">
               {currentStepIndex + 1} / {steps.length}
             </span>
             <button
@@ -896,7 +648,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                   setCurrentStepIndex((prev) => prev + 1);
                 }
               }}
-              className="text-[11px] text-stone-400 hover:text-amber-300 underline font-medium px-2 py-1 cursor-pointer"
+              className="text-[10px] text-stone-400 hover:text-stone-700 underline font-medium px-1 py-1 cursor-pointer"
               title="Passer à l'étape suivante sans forcer d'action"
             >
               Passer
@@ -907,7 +659,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             type="button"
             onClick={handleNextStep}
             id="btn-next-night-step"
-            className="px-4 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-lg active:scale-95 transition-all cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
           >
             <span>{isLastStep ? 'Terminer la Nuit' : 'Suivant'}</span>
             <ArrowRight className="w-4 h-4" />

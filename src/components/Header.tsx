@@ -33,130 +33,67 @@ export const Header: React.FC<HeaderProps> = ({
   livingCount,
   totalCount,
 }) => {
-  const isGameActive =
-    gamePhase !== 'setup_player_count' &&
-    gamePhase !== 'setup_roles' &&
-    gamePhase !== 'setup_players';
+  const isNight = gamePhase === 'night';
+  const isDay = gamePhase === 'day';
+  const isGameActive = isNight || isDay || gamePhase === 'game_over';
 
   return (
-    <header className="bg-stone-900 border-b border-amber-500/40 text-stone-100 sticky top-0 z-30 shadow-xl">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">
-        {/* Left: Direct Phase (Nuit 1 / Jour 1) and Living count */}
-        <div className="flex items-center gap-2 shrink-0">
+    <header className="h-[57px] shrink-0 border-b border-stone-200 bg-[#faf8f2]/95 backdrop-blur-md text-stone-900 sticky top-0 z-30">
+      <div className="h-full max-w-2xl mx-auto px-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {isGameActive ? (
-            <div className="flex items-center gap-2 bg-stone-950 px-2.5 sm:px-3 py-1.5 rounded-xl border border-amber-500/40 text-xs shadow-inner">
-              {gamePhase === 'night' ? (
-                <span className="flex items-center gap-1.5 text-indigo-300 font-black">
-                  <Moon className="w-4 h-4 text-indigo-400 animate-pulse" />
-                  <span>Nuit {nightCount}</span>
-                </span>
-              ) : gamePhase === 'day' ? (
-                <span className="flex items-center gap-1.5 text-amber-300 font-black">
-                  <Sun className="w-4 h-4 text-amber-400" />
-                  <span>Jour {dayCount}</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 text-emerald-300 font-black">
-                  <Trophy className="w-4 h-4 text-emerald-400" />
-                  <span>Fin</span>
-                </span>
-              )}
-
-              <div className="h-3 w-px bg-stone-800" />
-
-              <span className="flex items-center gap-1 text-stone-200 font-medium">
-                <Users className="w-3.5 h-3.5 text-amber-400" />
-                <strong className="text-white font-black">{livingCount}</strong>/{totalCount}
-                <span className="hidden sm:inline text-stone-400 text-[10px]">en vie</span>
-              </span>
-            </div>
+            <>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${isNight ? 'bg-slate-900 border-slate-700 text-slate-100' : isDay ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-stone-100 border-stone-300 text-stone-700'}`}>
+                {isNight ? <Moon className="w-4 h-4" /> : isDay ? <Sun className="w-4 h-4" /> : <Trophy className="w-4 h-4" />}
+              </div>
+              <div className="min-w-0 leading-none">
+                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">
+                  Sous Couverture
+                </div>
+                <div className="text-sm font-black text-stone-900">
+                  {isNight ? `Nuit ${nightCount}` : isDay ? `Jour ${dayCount}` : 'Fin de partie'}
+                </div>
+              </div>
+              <div className="h-6 w-px bg-stone-200 mx-1" />
+              <div className="flex items-center gap-1 text-xs font-bold text-stone-500">
+                <Users className="w-3.5 h-3.5" />
+                <span className="text-stone-900">{livingCount}</span>/{totalCount}
+              </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2 bg-stone-950 px-2.5 sm:px-3 py-1.5 rounded-xl border border-stone-800 text-xs shadow-inner">
-              <span className="font-serif font-bold text-amber-300 text-xs">
-                Préparation
-              </span>
-            </div>
+            <span className="text-sm font-black tracking-tight text-stone-900">Préparation</span>
           )}
         </div>
 
-        {/* Right: Action Buttons (all visible, compact icons + booklet for guide + clock for history) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1">
           {onOpenGrimoire && isGameActive && (
-            <button
-              onClick={onOpenGrimoire}
-              id="btn-header-grimoire"
-              className="flex items-center justify-center px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-black shadow border border-amber-300 transition-all active:scale-95 cursor-pointer"
-              title="Ouvrir la Table de Jeu"
-            >
-              Table
+            <button onClick={onOpenGrimoire} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Table de jeu" aria-label="Table de jeu">
+              <Users className="w-4 h-4" />
             </button>
           )}
-
-          {/* Rejoindre / Vue Joueur button: ONLY shown for phone mode, removed for physical cards mode */}
           {onOpenPlayerView && gameMode === 'phone' && (
-            <button
-              onClick={onOpenPlayerView}
-              id="btn-open-player-view"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-purple-950 hover:bg-purple-900 text-purple-200 text-xs border border-purple-500/50 transition-all active:scale-95 shadow font-bold cursor-pointer"
-              title="Écran joueur smartphone"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-purple-300" />
-              <span className="hidden md:inline">Vue Joueur</span>
+            <button onClick={onOpenPlayerView} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Vue joueur" aria-label="Vue joueur">
+              <Smartphone className="w-4 h-4" />
             </button>
           )}
-
-          {/* Arbitrage des règles */}
           {onOpenArbitrage && (
-            <button
-              onClick={onOpenArbitrage}
-              id="btn-open-arbitrage"
-              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white text-xs border border-stone-700 hover:border-amber-500/40 transition-all active:scale-95 shadow font-bold cursor-pointer flex items-center justify-center"
-              title="Arbitrage des interactions & règles"
-            >
-              <Sliders className="w-4 h-4 text-stone-300" />
+            <button onClick={onOpenArbitrage} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Règles" aria-label="Règles">
+              <Sliders className="w-4 h-4" />
             </button>
           )}
-
-          {/* Cartes & Images */}
           {onOpenImages && (
-            <button
-              onClick={onOpenImages}
-              id="btn-open-images"
-              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 text-xs border border-stone-700 hover:border-amber-500/40 transition-all active:scale-95 shadow font-bold cursor-pointer flex items-center justify-center"
-              title="Gérer les cartes & illustrations"
-            >
-              <ImageIcon className="w-4 h-4 text-amber-400" />
+            <button onClick={onOpenImages} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Cartes et images" aria-label="Cartes et images">
+              <ImageIcon className="w-4 h-4" />
             </button>
           )}
-
-          {/* Guide button: booklet icon only */}
-          <button
-            onClick={onOpenGuide}
-            id="btn-open-guide"
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-200 text-xs border border-amber-500/40 hover:border-amber-400 transition-all active:scale-95 shadow font-bold cursor-pointer flex items-center justify-center"
-            title="Guide des règles, cartes et lexique"
-          >
-            <BookOpen className="w-4 h-4 text-amber-300" />
+          <button onClick={onOpenGuide} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Guide" aria-label="Guide">
+            <BookOpen className="w-4 h-4" />
           </button>
-
-          {/* History / Chrono button: clock/chrono icon */}
-          <button
-            onClick={onOpenLogs}
-            id="btn-open-logs"
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-200 text-xs border border-stone-700 hover:border-amber-500/40 transition-all active:scale-95 shadow font-bold cursor-pointer flex items-center justify-center"
-            title="Historique / Chronologie de la partie"
-          >
-            <Clock className="w-4 h-4 text-amber-400" />
+          <button onClick={onOpenLogs} className="p-2 rounded-lg text-stone-500 hover:bg-stone-100 active:scale-95" title="Historique" aria-label="Historique">
+            <Clock className="w-4 h-4" />
           </button>
-
-          {/* Reset button */}
-          <button
-            onClick={onResetGame}
-            id="btn-reset-game"
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl bg-red-950/80 hover:bg-red-900 text-red-200 text-xs border border-red-800/60 transition-all active:scale-95 font-bold cursor-pointer flex items-center justify-center"
-            title="Nouvelle partie"
-          >
-            <RotateCcw className="w-4 h-4 text-red-400" />
+          <button onClick={onResetGame} className="p-2 rounded-lg text-stone-400 hover:bg-red-50 hover:text-red-600 active:scale-95" title="Nouvelle partie" aria-label="Nouvelle partie">
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
