@@ -20,6 +20,7 @@ import {
 } from '../utils/gameLogic';
 import { RoleCardModal } from './RoleCardModal';
 import { PlayerSelect } from './PlayerSelect';
+import { RoleSelect } from './RoleSelect';
 import { ValidationAlertModal } from './ValidationAlertModal';
 
 interface NightAssistantProps {
@@ -205,10 +206,18 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   } as React.CSSProperties;
 
   useEffect(() => {
-    if (currentStep?.roleId !== 'revendeur_armes' || revendeurCardRoleId) return;
+    if (currentStep?.roleId !== 'revendeur_armes') return;
+
     const available = getActivePerturbatorRoleIds(players);
-    if (available.length > 0) {
+
+    // Consistent option rule:
+    // - 1 available card: select it automatically.
+    // - 2+ available cards: the Storyteller must choose explicitly.
+    // - 0 available cards: leave empty and let validation explain the problem.
+    if (available.length === 1) {
       setRevendeurCardRoleId(available[0]);
+    } else if (!available.includes(revendeurCardRoleId as RoleId)) {
+      setRevendeurCardRoleId(null);
     }
   }, [currentStep?.roleId, players, revendeurCardRoleId]);
 
@@ -438,6 +447,25 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         message: 'Veuillez sélectionner les 2 joueurs désignés par le Hacker.',
       });
       return;
+    }
+    if (currentStep.roleId === 'revendeur_armes') {
+      const available = getActivePerturbatorRoleIds(players);
+      if (available.length === 0) {
+        setValidationModal({
+          isOpen: true,
+          title: 'Aucune carte disponible',
+          message: 'Aucun Perturbateur actuellement en jeu ne peut être montré.',
+        });
+        return;
+      }
+      if (available.length > 1 && !revendeurCardRoleId) {
+        setValidationModal({
+          isOpen: true,
+          title: 'Carte à montrer',
+          message: 'Choisissez la carte Perturbateur à montrer au Revendeur d’armes.',
+        });
+        return;
+      }
     }
 
     if (isLastStep) {
@@ -870,30 +898,35 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           )}
 
           {!isJunkieStep && currentStep.roleId === 'revendeur_armes' && (
-            <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-3 text-center">
-              {revendeurCardRoleId ? (
+            <div className="mt-4 max-w-md mx-auto">
+              {activePerturbatorRoleIds.length > 0 && (
                 <>
-                  <p className="text-sm font-black text-stone-900">
-                    Montrez au Revendeur d’armes une carte Perturbateur actuellement en jeu.
-                  </p>
-                  <p className="mt-1 text-xs text-stone-500">
-                    Carte sélectionnée : <span className="font-black text-stone-800">{ROLES[revendeurCardRoleId]?.nom}</span>
-                  </p>
+                  {activePerturbatorRoleIds.length > 1 && (
+                    <div className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-stone-400">
+                      Carte à montrer
+                    </div>
+                  )}
+                  <RoleSelect
+                    value={revendeurCardRoleId ?? ''}
+                    onChange={setRevendeurCardRoleId}
+                    roleIds={activePerturbatorRoleIds}
+                    placeholder="Choisir une carte…"
+                    accent="purple"
+                  />
                   <button
                     type="button"
-                    onClick={() => setCardModalRoleId(revendeurCardRoleId)}
-                    className="mt-3 w-full rounded-lg bg-stone-900 py-3 text-white text-xs font-black"
+                    disabled={!revendeurCardRoleId}
+                    onClick={() => revendeurCardRoleId && setCardModalRoleId(revendeurCardRoleId)}
+                    className="mt-3 w-full rounded-xl bg-stone-900 py-3.5 text-white text-xs font-black disabled:opacity-40"
                   >
                     MONTRER LA CARTE
                   </button>
-                  {activePerturbatorRoleIds.length > 1 && (
-                    <div className="mt-2 text-[10px] text-stone-500">
-                      Une carte Perturbateur réelle actuellement en jeu est sélectionnée automatiquement.
-                    </div>
-                  )}
                 </>
-              ) : (
-                <p className="text-xs text-red-700 font-bold">Aucun Perturbateur actif disponible.</p>
+              )}
+              {activePerturbatorRoleIds.length === 0 && (
+                <p className="text-xs text-red-700 font-bold text-center">
+                  Aucun Perturbateur actif disponible.
+                </p>
               )}
             </div>
           )}
