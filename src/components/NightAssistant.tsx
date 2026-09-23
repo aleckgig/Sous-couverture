@@ -138,7 +138,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const roleImage = currentStep ? DEFAULT_ROLE_IMAGE_MAP[currentStep.roleId] : undefined;
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const roleAccent =
-    role?.camp_initial === 'Forces de l'ordre'
+    role?.camp_initial === "Forces de l'ordre"
       ? { bg: 'bg-blue-50', line: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', button: 'bg-blue-700', strokePosition: '0%' }
       : role?.isPerturbateur
         ? { bg: 'bg-purple-50', line: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200', button: 'bg-purple-700', strokePosition: '40%' }
