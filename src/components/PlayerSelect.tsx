@@ -152,6 +152,23 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
           aria-label={placeholder}
           className="absolute left-0 right-0 z-50 mt-2 max-h-[min(52dvh,420px)] overflow-y-auto overscroll-contain rounded-2xl border border-stone-200 bg-[#faf8f2] p-1.5 shadow-[0_12px_35px_rgba(30,25,18,0.16)]"
         >
+          <div className="px-2 pt-1 pb-2">
+            <input
+              ref={searchRef}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Rechercher un joueur…"
+              className="w-full rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-[15px] font-medium text-stone-900 outline-none placeholder:text-stone-400 focus:border-stone-400"
+              aria-label="Rechercher un joueur"
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  setSearch('');
+                  setIsOpen(false);
+                }
+              }}
+            />
+          </div>
           <button
             type="button"
             role="option"
@@ -162,7 +179,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
             <span className="block text-[15px] font-semibold text-stone-500">{placeholder}</span>
           </button>
 
-          {availablePlayers.map((player) => {
+          {filteredPlayers.map((player) => {
             const roleName = ROLES[player.roleId]?.nom ?? player.roleId;
             const selected = player.id === value;
 
