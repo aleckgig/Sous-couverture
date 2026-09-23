@@ -27,7 +27,9 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   accent = 'default',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const accentClasses = {
     default: {
@@ -67,6 +69,13 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   );
 
   const selectedPlayer = availablePlayers.find((player) => player.id === value);
+  const normalizedSearch = search.trim().toLocaleLowerCase('fr-CA');
+  const filteredPlayers = normalizedSearch
+    ? availablePlayers.filter((player) => {
+        const roleName = ROLES[player.roleId]?.nom ?? player.roleId;
+        return `${player.name} ${roleName}`.toLocaleLowerCase('fr-CA').includes(normalizedSearch);
+      })
+    : availablePlayers;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -96,6 +105,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
 
   const choosePlayer = (playerId: string) => {
     onChange(playerId);
+    setSearch('');
     setIsOpen(false);
   };
 
@@ -106,7 +116,14 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => {
+          setIsOpen((open) => {
+            const next = !open;
+            if (next) window.setTimeout(() => searchRef.current?.focus(), 0);
+            else setSearch('');
+            return next;
+          });
+        }}
         className={\`w-full min-h-[58px] rounded-xl border bg-[#faf8f2] px-4 py-2.5 text-left shadow-sm outline-none transition ring-0 focus:ring-4 \${isOpen ? accentClasses.open : accentClasses.border}\`}
       >
         {selectedPlayer ? (
