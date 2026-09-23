@@ -89,6 +89,7 @@ export interface Player {
   isPoisoned?: boolean;
   hasUsedTueurAGages?: boolean;
   hasUsedGardeDuCorps?: boolean;
+  isExecutionProtected?: boolean;
   isFaussePiste: boolean; // Designated false lead for Hacker
   linkedVoteTargetId?: string; // Apprenti's target to mimic next day
   deathReason?: 'execution' | 'tueur_a_gages' | 'other';
