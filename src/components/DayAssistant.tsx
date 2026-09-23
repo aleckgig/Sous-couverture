@@ -56,6 +56,7 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   // Tueur à gages UI
   const [isTueurSectionOpen, setIsTueurSectionOpen] = useState<boolean>(false);
   const [tueurTargetId, setTueurTargetId] = useState<string>('');
+  const [gardeTargetId, setGardeTargetId] = useState<string>('');
 
   const [validationModal, setValidationModal] = useState<{
     isOpen: boolean;
