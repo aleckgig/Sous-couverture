@@ -230,7 +230,7 @@ export function generateNightSteps(
 export function checkVictory(players: Player[], lastExecutionPlayerId?: string): { winner: 'Gang' | 'Forces de l\'ordre'; reason: string } | null {
   if (lastExecutionPlayerId) {
     const executed = players.find(p => p.id === lastExecutionPlayerId);
-    if (executed?.roleId === 'caid') {
+    if (executed?.roleId === 'caid' || executed?.perceivedRoleId === 'caid') {
       return { winner: 'Forces de l\'ordre', reason: 'Le Caïd a été exécuté par vote. Le Gang perd immédiatement.' };
     }
   }
