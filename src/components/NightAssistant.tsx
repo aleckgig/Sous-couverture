@@ -475,16 +475,6 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     }
   };
 
-  const actionLabel =
-    isJunkieStep && currentStep?.roleId === 'agent_sous_couverture'
-      ? (junkieAgentFlowStep === 0 ? 'Choisissez une action' : junkieAgentFlowStep === 1 ? 'Choisissez une cible' : junkieAgentFlowStep === 2 ? 'Le joueur accepte-t-il ?' : 'Action terminée')
-      : agentFlowStep === 0 ? 'Choisissez une action' :
-    agentFlowStep === 1 ? (agentActionType === 'recruit' ? 'Choisissez un joueur à recruter' : 'Choisissez un joueur à envoyer en prison') :
-    agentFlowStep === 2 ? 'Le joueur accepte-t-il ?' :
-    recruitmentAcceptedTonight === true ? 'Recrutement accepté' :
-    recruitmentAcceptedTonight === false ? 'Recrutement refusé' :
-    agentActionType === 'prison' ? 'Arrestation' : 'Action terminée';
-
   const nextLabel =
     isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 2
       ? 'Confirmer'
@@ -550,13 +540,6 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             {role?.nom ?? currentStep.title}
           </h1>
         </div>
-        {actingPlayer && (
-          <div className="mt-2 text-sm font-medium text-stone-600">
-            <span className="font-black text-stone-900">{actingPlayer.name}</span>
-            <span className="text-stone-400"> · </span>
-            <span>{actionLabel}</span>
-          </div>
-        )}
       </div>
 
       {/* Main instruction / action */}
@@ -603,10 +586,10 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
           {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 1 && (
             <>
-              <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                {agentActionType === 'recruit' ? 'Choisissez un joueur à recruter comme informateur.' : 'Choisissez un joueur à envoyer en prison.'}
-              </p>
               <div className="mt-4">
+                <p className="text-center text-sm font-bold text-stone-700 mb-2">
+                  {agentActionType === 'recruit' ? 'Joueur à recruter comme informateur' : 'Joueur à envoyer en prison'}
+                </p>
                 <PlayerSelect
                   value={agentTargetId}
                   onChange={(id) => setAgentTargetId(id)}
@@ -673,11 +656,10 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                   <p className="text-base font-medium text-stone-800 mt-3">
                     {agentTarget?.name} est maintenant un informateur.
                   </p>
-                  <div className="mt-4 rounded-xl border border-stone-200 bg-white p-3">
-                    <p className="text-[11px] text-stone-500 mb-2">Montrez-lui secrètement :</p>
-                    <button type="button" onClick={() => setCardModalRoleId('agent_sous_couverture')} className="w-full py-3 rounded-lg bg-stone-900 text-white font-black text-xs flex items-center justify-center gap-2">
-                      <Eye className="w-4 h-4" /> Montrer la carte de l’Agent
-                    </button>
+                  <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950">
+                    <p className="font-black">Réveillez l’Agent sous couverture.</p>
+                    <p className="mt-1">Demandez-lui d’ouvrir les yeux pour qu’il prenne connaissance du recrutement.</p>
+                    <p className="mt-2 font-bold">Lorsque les deux joueurs ont pris connaissance de la situation, demandez-leur de fermer les yeux.</p>
                   </div>
                 </>
               ) : recruitmentAcceptedTonight === false ? (
@@ -798,7 +780,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           )}
 
           {isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 1 && (
-            <PlayerSelect
+            <>
+              <p className="text-center text-sm font-bold text-stone-700">
+                {junkieAgentActionType === 'recruit' ? 'Joueur à recruter comme informateur' : 'Joueur à envoyer en prison'}
+              </p>
+              <PlayerSelect
               value={junkieAgentTargetId}
               onChange={setJunkieAgentTargetId}
               players={players.filter((p) =>
@@ -809,7 +795,8 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               )}
               placeholder="Choisir un joueur…"
               accent={junkieAgentActionType === 'recruit' ? 'red' : 'default'}
-            />
+              />
+            </>
           )}
 
           {isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 2 && (
