@@ -793,11 +793,15 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           )}
 
           {isJunkieStep && (currentStep.roleId === 'nettoyeur' || currentStep.roleId === 'revendeur_armes') && (
-            <button type="button" onClick={() => setCardModalRoleId(
-              currentStep.roleId === 'nettoyeur'
-                ? (Object.values(ROLES).find(r => r.id !== lastDayExecutedPlayerId && r.id !== 'junkie')?.id ?? 'caid')
-                : (Object.values(ROLES).find(r => r.isPerturbateur && !activePerturbatorRoleIds.includes(r.id))?.id ?? 'caid')
-            )} className="w-full py-3 rounded-lg bg-stone-900 text-white text-xs font-black">
+            <button type="button" onClick={() => {
+              const executedRoleId = lastDayExecutedPlayerId
+                ? players.find(p => p.id === lastDayExecutedPlayerId)?.roleId
+                : undefined;
+              const falseRoleId = currentStep.roleId === 'nettoyeur'
+                ? (Object.values(ROLES).find(r => r.id !== executedRoleId && r.id !== 'junkie')?.id ?? 'caid')
+                : (Object.values(ROLES).find(r => r.isPerturbateur && !activePerturbatorRoleIds.includes(r.id))?.id ?? 'caid');
+              setCardModalRoleId(falseRoleId);
+            }} className="w-full py-3 rounded-lg bg-stone-900 text-white text-xs font-black">
               <Eye className="inline w-4 h-4 mr-1" /> MONTRER UNE FAUSSE CARTE
             </button>
           )}
