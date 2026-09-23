@@ -412,48 +412,15 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
               </div>
             )}
 
-            <span className="text-xs font-black uppercase tracking-wider text-amber-400 block">
-              Sélectionnez le joueur condamné par le vote du Gang :
-            </span>
-
-            <div className="grid grid-cols-1 gap-2">
-              {freeLivingPlayers.map((p) => {
-                const isSelected = selectedExecuteId === p.id;
-                const isCaid = p.roleId === 'caid';
-                const isAgent = p.roleId === 'agent_sous_couverture';
-
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setSelectedExecuteId(p.id)}
-                    className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2.5 cursor-pointer ${
-                      isSelected
-                        ? 'bg-red-950 border-red-400 text-white shadow ring-2 ring-red-400/40'
-                        : 'bg-stone-950 border-stone-800 text-stone-200 hover:border-amber-500/40'
-                    }`}
-                  >
-                    <div className="truncate min-w-0 flex-1">
-                      <span className={`font-bold text-sm block truncate ${isAgent ? 'text-blue-400' : 'text-white'}`}>
-                        {p.name}
-                      </span>
-                      <span className="text-[10px] text-stone-400 block truncate">
-                        {ROLES[p.roleId]?.nom || p.roleId}
-                      </span>
-                      {isCaid && (
-                        <span className="text-[9px] text-amber-400 font-bold block">
-                          Caïd
-                        </span>
-                      )}
-                      {isAgent && (
-                        <span className="text-[9px] text-blue-400 font-bold block">
-                          👮🏻‍♂️ Agent sous couverture
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              <div className="text-[10px] font-black uppercase tracking-wider text-stone-400">Joueur condamné par le vote</div>
+              <PlayerSelect
+                value={selectedExecuteId}
+                onChange={setSelectedExecuteId}
+                players={freeLivingPlayers}
+                placeholder="Choisir le joueur exécuté…"
+                accent="red"
+              />
             </div>
 
             {selectedExecuteId && (
