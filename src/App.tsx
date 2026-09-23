@@ -13,7 +13,7 @@ import { RoleCardModal } from './components/RoleCardModal';
 import { PhonePlayerView } from './components/PhonePlayerView';
 import { ImageManagerModal } from './components/ImageManagerModal';
 import { RulesValidationModal } from './components/RulesValidationModal';
-import { generateNightSteps, checkVictory, generateBalancedSousCouvertureRoles } from './utils/gameLogic';
+import { generateNightSteps, checkVictory, generateBalancedSousCouvertureRoles, getInformantsCount } from './utils/gameLogic';
 import { ROLES } from './data/roles';
 import { Sparkles, RefreshCw, Trophy, Eye, RotateCcw } from 'lucide-react';
 
@@ -313,8 +313,43 @@ export default function App() {
       }
     }
 
+    // Resolve the Junkie's simulated role early enough for its real effects to
+    // influence later night actions (e.g. a simulated Chimiste can poison the Agent,
+    // and a simulated Avocate can protect someone from the Agent's arrest).
+    const junkie = players.find(p => p.roleId === 'junkie' && p.isAlive && !p.isPrisoner);
+    const junkieAction = summary?.junkieAction;
+    const junkiePoisoned = !!(junkie && (
+      summary?.chimisteTargetId === junkie.id ||
+      junkie.isInformationPoisoned ||
+      junkie.isPoisoned
+    ));
+
+    if (junkie && junkieAction && !junkiePoisoned) {
+      if (junkieAction.perceivedRoleId === 'chimiste' && junkieAction.chimisteTargetId) {
+        updatedPlayers = updatedPlayers.map(p =>
+          p.id === junkieAction.chimisteTargetId
+            ? { ...p, isInformationPoisoned: true, isPoisoned: true }
+            : p
+        );
+        addLog(\`🧪 Le Junkie a appliqué le pouvoir du Chimiste sur \${players.find(p => p.id === junkieAction.chimisteTargetId)?.name ?? 'une cible'}.\`, 'action');
+      }
+      if (junkieAction.perceivedRoleId === 'avocat_vereux' && junkieAction.avocateTargetId) {
+        updatedPlayers = updatedPlayers.map(p =>
+          p.id === junkieAction.avocateTargetId
+            ? { ...p, isProtected: true }
+            : p
+        );
+        addLog(\`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur \${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.\`, 'protection');
+      }
+    }
+
     const agent = players.find(p => p.roleId === 'agent_sous_couverture' && p.isAlive && !p.isPrisoner);
-    const agentPoisoned = !!(agent && (agent.isInformationPoisoned || agent.isPoisoned || summary?.chimisteTargetId === agent.id));
+    const agentPoisoned = !!(agent && (
+      agent.isInformationPoisoned ||
+      agent.isPoisoned ||
+      summary?.chimisteTargetId === agent.id ||
+      updatedPlayers.find(p => p.id === agent.id)?.isInformationPoisoned
+    ));
     const target = summary?.recruitedPlayerId
       ? players.find(p => p.id === summary.recruitedPlayerId)
       : undefined;
@@ -333,8 +368,16 @@ export default function App() {
       const prisonTarget = players.find(p => p.id === prisonTargetId);
       const avocateTargetId = summary?.avocateTargetId;
       const avocate = players.find(p => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner);
-      const avocatePoisoned = !!(avocate && (avocate.isInformationPoisoned || avocate.isPoisoned || summary?.chimisteTargetId === avocate.id));
+      const avocatePoisoned = !!(avocate && (
+        avocate.isInformationPoisoned ||
+        avocate.isPoisoned ||
+        summary?.chimisteTargetId === avocate.id ||
+        updatedPlayers.find(p => p.id === avocate.id)?.isInformationPoisoned
+      ));
       const protectedByAvocate = avocateTargetId === prisonTargetId && avocate && !avocatePoisoned;
+      const protectedByJunkieAvocate = junkieAction?.perceivedRoleId === 'avocat_vereux' &&
+        !junkiePoisoned &&
+        junkieAction.avocateTargetId === prisonTargetId;
       const validTarget = prisonTarget &&
         prisonTarget.isAlive &&
         !prisonTarget.isPrisoner &&
@@ -342,7 +385,7 @@ export default function App() {
         prisonTarget.roleId !== 'chauffeur' &&
         !prisonTarget.isInformateur;
 
-      if (validTarget && !protectedByAvocate) {
+      if (validTarget && !protectedByAvocate && !protectedByJunkieAvocate) {
         updatedPlayers = updatedPlayers.map(p =>
           p.id === prisonTargetId ? { ...p, isPrisoner: true } : p
         );
@@ -356,39 +399,9 @@ export default function App() {
       addLog('⚠️ L’Agent sous couverture était empoisonné : son recrutement a échoué, même s’il croit avoir réussi.', 'info');
     }
 
-    // The Junkie uses the power of their perceived role for the whole game.
-    // Their real role remains Junkie. If the Junkie is poisoned, the simulated action
-    // fails silently, while any information they receive is handled as false by the storyteller UI.
-    const junkie = players.find(p => p.roleId === 'junkie' && p.isAlive && !p.isPrisoner);
-    const junkieAction = summary?.junkieAction;
-    const junkiePoisoned = !!(junkie && (
-      summary?.chimisteTargetId === junkie.id ||
-      junkie.isInformationPoisoned ||
-      junkie.isPoisoned
-    ));
-
+    // Apply the remaining simulated Junkie powers after the normal Agent resolution.
     if (junkie && junkieAction && !junkiePoisoned) {
       switch (junkieAction.perceivedRoleId) {
-        case 'chimiste':
-          if (junkieAction.chimisteTargetId) {
-            updatedPlayers = updatedPlayers.map(p =>
-              p.id === junkieAction.chimisteTargetId
-                ? { ...p, isInformationPoisoned: true, isPoisoned: true }
-                : p
-            );
-            addLog(\`🧪 Le Junkie a appliqué le pouvoir du Chimiste sur \${players.find(p => p.id === junkieAction.chimisteTargetId)?.name ?? 'une cible'}.\`, 'action');
-          }
-          break;
-        case 'avocat_vereux':
-          if (junkieAction.avocateTargetId) {
-            updatedPlayers = updatedPlayers.map(p =>
-              p.id === junkieAction.avocateTargetId
-                ? { ...p, isProtected: true }
-                : p
-            );
-            addLog(\`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur \${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.\`, 'protection');
-          }
-          break;
         case 'apprenti':
           if (junkieAction.apprentiTargetId) {
             updatedPlayers = updatedPlayers.map(p =>
