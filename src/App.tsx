@@ -630,10 +630,11 @@ export default function App() {
           )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        Sous Couverture • Jeu de Déduction Sociale sur le Thème du Crime Organisé
-      </footer>
+      {gamePhase !== "night" && gamePhase !== "day" && (
+        <footer className="border-t border-stone-200 bg-[#f0ece2] py-3 text-center text-[10px] text-stone-400">
+          Sous Couverture • Jeu de déduction sociale
+        </footer>
+      )}
 
       {/* Table & Grimoire Modal Popup */}
       {isGrimoirePopupOpen && (
