@@ -110,7 +110,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   };
 
   return (
-    <div ref={rootRef} className={\`relative \${className}\`}>
+    <div ref={rootRef} className={`relative ${className}`}>
       <button
         id={id}
         type="button"
@@ -124,7 +124,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
             return next;
           });
         }}
-        className={\`w-full min-h-[58px] rounded-xl border bg-[#faf8f2] px-4 py-2.5 text-left shadow-sm outline-none transition ring-0 focus:ring-4 \${isOpen ? accentClasses.open : accentClasses.border}\`}
+        className={`w-full min-h-[58px] rounded-xl border bg-[#faf8f2] px-4 py-2.5 text-left shadow-sm outline-none transition ring-0 focus:ring-4 ${isOpen ? accentClasses.open : accentClasses.border}`}
       >
         {selectedPlayer ? (
           <span className="block min-w-0 pr-7">
@@ -142,7 +142,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
         )}
 
         <ChevronDown
-          className={\`pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500 transition-transform \${isOpen ? 'rotate-180' : ''}\`}
+          className={`pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -174,7 +174,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
             role="option"
             aria-selected={!value}
             onClick={() => choosePlayer('')}
-            className={\`w-full rounded-xl px-3.5 py-3 text-left transition \${!value ? accentClasses.selected : 'hover:bg-stone-100'}\`}
+            className={`w-full rounded-xl px-3.5 py-3 text-left transition ${!value ? accentClasses.selected : 'hover:bg-stone-100'}`}
           >
             <span className="block text-[15px] font-semibold text-stone-500">{placeholder}</span>
           </button>
@@ -190,7 +190,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
                 role="option"
                 aria-selected={selected}
                 onClick={() => choosePlayer(player.id)}
-                className={\`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left transition \${selected ? accentClasses.selected : 'hover:bg-stone-100 active:bg-stone-200'}\`}
+                className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left transition ${selected ? accentClasses.selected : 'hover:bg-stone-100 active:bg-stone-200'}`}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[16px] font-black leading-tight text-stone-900">
@@ -200,7 +200,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
                     {roleName}
                   </span>
                 </span>
-                {selected && <Check className={\`h-5 w-5 shrink-0 \${accentClasses.check}\`} />}
+                {selected && <Check className={`h-5 w-5 shrink-0 ${accentClasses.check}`} />}
               </button>
             );
           })}
