@@ -44,7 +44,7 @@ export function getPickpocketForcesDeLOrdreCount(
   const neighbors = getLivingNeighbors(players, pickpocketPlayer.seatNumber);
   const count = neighbors.filter(n => {
     const realForces = n.currentTeam === 'Forces de l\'ordre';
-    return n.roleId === 'arnaqueuse' ? !realForces : realForces;
+    return (n.roleId === 'arnaqueuse' || n.perceivedRoleId === 'arnaqueuse') ? !realForces : realForces;
   }).length;
   return { count, neighbors };
 }
