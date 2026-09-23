@@ -114,6 +114,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   const isTouchDraggingRef = useRef<boolean>(false);
 
   const [faussePisteSeatIndex, setFaussePisteSeatIndex] = useState<number>(0);
+  const [junkiePerceivedRoleId, setJunkiePerceivedRoleId] = useState<RoleId | ''>('');
 
   const [isImageManagerOpen, setIsImageManagerOpen] = useState<boolean>(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState<boolean>(false);
@@ -467,7 +468,26 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const junkieSeatIndex = Object.entries(playerRoleMap).find(([, roleId]) => roleId === 'junkie')?.[0];
+  const junkieRoleOptions = Object.values(ROLES).filter((r) => r.id !== 'junkie');
+
+  useEffect(() => {
+    if (junkieSeatIndex === undefined) {
+      setJunkiePerceivedRoleId('');
+    }
+  }, [junkieSeatIndex]);
+
   const handleLaunchGame = async () => {
+    const hasJunkie = Object.values(playerRoleMap).includes('junkie');
+    if (hasJunkie && !junkiePerceivedRoleId) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Fausse carte du Junkie requise',
+        message: 'Choisissez la carte de rôle que le Junkie recevra et croira être son rôle.',
+      });
+      return;
+    }
+
     let finalPlayers: Player[] = [];
 
     if (gameMode === 'phone') {
@@ -484,6 +504,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           currentTeam: rId === 'agent_sous_couverture' ? "Forces de l'ordre" : 'Gang',
           isProtected: false,
           isFaussePiste: idx === faussePisteSeatIndex,
+          ...(rId === 'junkie' && junkiePerceivedRoleId ? { perceivedRoleId: junkiePerceivedRoleId } : {}),
         };
       });
     } else {
@@ -500,6 +521,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           currentTeam: assignedRole === 'agent_sous_couverture' ? "Forces de l'ordre" : 'Gang',
           isProtected: false,
           isFaussePiste: idx === faussePisteSeatIndex,
+          ...(assignedRole === 'junkie' && junkiePerceivedRoleId ? { perceivedRoleId: junkiePerceivedRoleId } : {}),
         };
       });
     }
@@ -510,7 +532,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
       finalPlayers,
       [],
       redHerringPlayerId,
-      undefined,
+      junkiePerceivedRoleId || undefined,
       { code: roomCode, storytellerName, mode: gameMode }
     );
   };
@@ -1518,6 +1540,41 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             Configurations Spéciales & Lancement
           </h2>
         </div>
+
+        {/* Junkie false-role card */}
+        {junkieSeatIndex !== undefined && (
+          <div className="bg-purple-950/30 p-4 rounded-2xl border border-purple-500/30 space-y-2.5">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest font-black text-purple-300">
+                Configuration du Junkie
+              </div>
+              <p className="text-xs text-stone-400 mt-1">
+                Le Junkie recevra cette fausse carte et croira sincèrement être ce rôle. Il utilisera le pouvoir inscrit sur cette carte.
+              </p>
+            </div>
+            <select
+              value={junkiePerceivedRoleId}
+              onChange={(e) => setJunkiePerceivedRoleId(e.target.value as RoleId)}
+              className="w-full bg-stone-900 border border-purple-400/40 rounded-xl px-3 py-3 text-sm text-white outline-none"
+            >
+              <option value="">Choisir la fausse carte…</option>
+              {junkieRoleOptions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nom}
+                </option>
+              ))}
+            </select>
+            {junkiePerceivedRoleId && (
+              <button
+                type="button"
+                onClick={() => setPreviewCardRoleId(junkiePerceivedRoleId)}
+                className="w-full py-3 rounded-xl bg-stone-900 border border-purple-400/40 text-purple-200 font-black text-xs"
+              >
+                Voir la carte à montrer au Junkie
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Fausse Piste selector */}
         <div className="bg-stone-950 p-4 rounded-2xl border border-stone-800 space-y-2">
