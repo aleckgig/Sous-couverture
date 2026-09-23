@@ -1,8 +1,4 @@
 {
-  "rule_pickpocket_prisoners": "exclude",
-  "rule_prison_vote": "no_vote",
-  "rule_prison_recruit": "allowed",
-  "rule_agent_in_prison": "gang_win",
-  "rule_caid_prison": "prison_allowed",
-  "rule_avocat_prisoners": "all_informants"
+  "canonical": true,
+  "note": "Les règles de Sous Couverture sont fixes et ne sont pas configurables dans l’application."
 }

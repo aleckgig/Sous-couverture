@@ -41,6 +41,7 @@ interface NightAssistantProps {
     chimisteTargetId?: string;
     apprentiTargetId?: string;
     gardeTargetId?: string;
+    avocateTargetId?: string;
   }) => void;
   lastDayExecutedPlayerId?: string;
   avocatPlaidoyerActive?: boolean;
@@ -65,6 +66,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [chimisteTargetId, setChimisteTargetId] = useState<string>('');
   const [apprentiTargetId, setApprentiTargetId] = useState<string>('');
   const [gardeTargetId, setGardeTargetId] = useState<string>('');
+  const [avocateTargetId, setAvocateTargetId] = useState<string>('');
   
   // Agent choices
   const [agentActionType, setAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
@@ -119,6 +121,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       chimisteTargetId: chimisteTargetId || undefined,
       apprentiTargetId: apprentiTargetId || undefined,
       gardeTargetId: gardeTargetId || undefined,
+      avocateTargetId: avocateTargetId || undefined,
     });
   };
 
@@ -172,6 +175,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
   // Next / Previous helpers
   const handleNextStep = () => {
+    // Validation des choix obligatoires
+    if (currentStep.roleId === 'chimiste' && !chimisteTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible du Chimiste requise', message: 'Sélectionnez le joueur que le Chimiste empoisonne.' });
+      return;
+    }
+    if (currentStep.roleId === 'apprenti' && !apprentiTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible de l’Apprenti requise', message: 'Sélectionnez le joueur que l’Apprenti doit suivre demain.' });
+      return;
+    }
+    if (currentStep.roleId === 'avocat_vereux' && !avocateTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible de l’Avocate requise', message: 'Sélectionnez le joueur à protéger contre la prison.' });
+      return;
+    }
+
     // Validation: Agent sous couverture
     if (currentStep.roleId === 'agent_sous_couverture') {
       if (agentActionType === 'recruit' && recruitmentAcceptedTonight === null) {
@@ -491,9 +508,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                       .filter(
                         (p) =>
                           p.isAlive &&
-                          (canRecruitPrisoners() || !p.isPrisoner) &&
+                          !p.isPrisoner &&
+                          p.currentTeam === 'Gang' &&
                           p.roleId !== 'agent_sous_couverture' &&
-                          !p.isInformateur
+                          !p.isInformateur &&
+                          getInformantsCount(players) < 2
                       )
                       .map((p) => {
                         const isSelected = agentTargetId === p.id;
@@ -549,7 +568,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                             onClick={() => {
                               setRecruitmentAcceptedTonight(true);
                               const targetPlayer = players.find((p) => p.id === agentTargetId);
-                              if (targetPlayer) {
+                              if (targetPlayer && !isImpairedByChimiste && targetPlayer.roleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
                                 onUpdatePlayer({
                                   ...targetPlayer,
                                   isInformateur: true,
@@ -631,7 +650,10 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                             type="button"
                             onClick={() => {
                               setAgentTargetId(p.id);
-                              if (isChauffeur) {
+                              if (isImpairedByChimiste) {
+                                setNoticeMessage(`⚠️ L'Agent est empoisonné : il croit que l'arrestation a fonctionné, mais elle échoue.`);
+                                setImprisonedPlayerId(undefined);
+                              } else if (isChauffeur) {
                                 setNoticeMessage(`🛑 Le Chauffeur (${p.name}) est immunisé contre la prison ! L'arrestation échoue.`);
                                 setImprisonedPlayerId(undefined);
                               } else if (caidImmune) {
@@ -665,77 +687,35 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {/* 5. L'AVOCATE VÉREUSE (SI PLAIDOYER ACTIF) */}
+          {/* 5. L'AVOCATE */}
           {currentStep.roleId === 'avocat_vereux' && (
-            <div className="bg-stone-950 border border-amber-500/50 rounded-2xl p-4 space-y-3">
-              <span className="text-xs font-black text-amber-300 uppercase tracking-wider block">
-                ⚖️ Choix des Informateurs (Plaidoyer de l'Avocate véreuse) :
+            <div className="bg-stone-950 border border-blue-500/40 rounded-2xl p-4 space-y-3">
+              <span className="text-xs font-black text-blue-300 uppercase tracking-wider block">
+                🛡️ Protection contre la prison
               </span>
               <p className="text-xs text-stone-300">
-                Demandez en secret à chaque Informateur s'il souhaite réintégrer le Gang :
+                Choisissez 1 joueur. Cette personne ne pourra pas être envoyée en prison cette nuit.
               </p>
-              <div className="space-y-2">
-                {players
-                  .filter((p) => p.isInformateur && p.isAlive && (canPrisonerInformantsParticipateInAvocate() || !p.isPrisoner))
-                  .map((p) => {
-                    return (
-                      <div
-                        key={p.id}
-                        className="bg-stone-900 p-3 rounded-xl border border-stone-800 flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <span className="font-bold text-sm text-white">
-                            {p.name}
-                            {p.isPrisoner && (
-                              <span className="ml-1.5 text-[9px] px-1 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40">
-                                🚔 En prison
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-xs text-stone-400 ml-2">
-                            (Actuellement : {p.currentTeam})
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onUpdatePlayer({
-                                ...p,
-                                isInformateur: false,
-                                currentTeam: 'Gang',
-                              });
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                              p.currentTeam === 'Gang'
-                                ? 'bg-amber-500 text-stone-950 border-amber-400'
-                                : 'bg-stone-800 text-stone-300 border-stone-700'
-                            }`}
-                          >
-                            Réintègre le Gang
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onUpdatePlayer({
-                                ...p,
-                                isInformateur: true,
-                                currentTeam: 'Forces de l\'ordre',
-                              });
-                            }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                              p.currentTeam === 'Forces de l\'ordre'
-                                ? 'bg-blue-600 text-white border-blue-400'
-                                : 'bg-stone-800 text-stone-300 border-stone-700'
-                            }`}
-                          >
-                            Reste Informateur
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
+              <select
+                value={avocateTargetId}
+                onChange={(e) => {
+                  setAvocateTargetId(e.target.value);
+                  const target = players.find(p => p.id === e.target.value);
+                  if (target) setNoticeMessage(`${target.name} est protégé contre la prison cette nuit.`);
+                }}
+                className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3 py-3 text-sm text-white"
+              >
+                <option value="">— Choisir un joueur —</option>
+                {players.filter(p => p.isAlive && !p.isPrisoner && p.id !== actingPlayer?.id).map(p => (
+                  <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
+                ))}
+              </select>
+              {avocateTargetId && (
+                <div className="text-xs text-blue-200 bg-blue-950/60 border border-blue-500/40 rounded-xl p-3">
+                  {players.find(p => p.id === avocateTargetId)?.name} sera protégé contre la prison.
+                  {isImpairedByChimiste && ' ⚠️ Mais l’Avocate est empoisonnée : sa protection échouera.'}
+                </div>
+              )}
             </div>
           )}
 

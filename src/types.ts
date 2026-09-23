@@ -85,6 +85,11 @@ export interface Player {
   isAlive: boolean; // Alive or executed/killed
   isProtected: boolean; // Protected tonight by Garde du corps
   isInformationPoisoned: boolean; // Targeted by Chimiste tonight
+  /** Backward-compatible alias used by existing UI; mirrors isInformationPoisoned. */
+  isPoisoned?: boolean;
+  hasUsedTueurAGages?: boolean;
+  hasUsedGardeDuCorps?: boolean;
+  isExecutionProtected?: boolean;
   isFaussePiste: boolean; // Designated false lead for Hacker
   linkedVoteTargetId?: string; // Apprenti's target to mimic next day
   deathReason?: 'execution' | 'tueur_a_gages' | 'other';
