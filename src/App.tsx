@@ -280,124 +280,92 @@ export default function App() {
   };
 
   // Night finished handler
-  const handleFinishNight = (killedPlayerId?: string) => {
-    let updatedPlayers = players.map((p) => ({ ...p, isProtected: false })); // Monk protection resets each day
-    let actualKilledId: string | undefined = undefined;
+  const handleFinishNight = (summary?: {
+    imprisonedPlayerId?: string;
+    recruitedPlayerId?: string;
+    chimisteTargetId?: string;
+    apprentiTargetId?: string;
+    avocateTargetId?: string;
+  }) => {
+    let updatedPlayers = players.map(p => ({
+      ...p,
+      isProtected: false,
+      isInformationPoisoned: false,
+      isPoisoned: false,
+    }));
 
-    if (killedPlayerId && killedPlayerId !== 'none') {
-      const target = players.find((p) => p.id === killedPlayerId);
-      const moinePlayer = players.find(
-        (p) =>
-          (p.roleId === 'moine' || (p.roleId === 'ivrogne' && drunkPerceivedRoleId === 'moine')) &&
-          p.isAlive
+    const chimiste = players.find(p => p.roleId === 'chimiste' && p.isAlive && !p.isPrisoner);
+    const chimistePoisoned = !!(chimiste?.isInformationPoisoned || chimiste?.isPoisoned);
+    if (summary?.chimisteTargetId && !chimistePoisoned) {
+      updatedPlayers = updatedPlayers.map(p =>
+        p.id === summary.chimisteTargetId
+          ? { ...p, isInformationPoisoned: true, isPoisoned: true }
+          : p
       );
-      const isMoineImpaired = Boolean(
-        moinePlayer && (moinePlayer.isPoisoned || moinePlayer.roleId === 'ivrogne')
-      );
-      // Monk protection ONLY works if Monk is alive AND not poisoned AND not drunk!
-      const isProtectionEffective = Boolean(
-        target?.isProtected && moinePlayer && !isMoineImpaired
-      );
-      const demonPlayer = players.find((p) => p.roleId === 'demon' && p.isAlive);
-      const isDemonImpaired = Boolean(demonPlayer?.isPoisoned);
+    }
 
-      if (target) {
-        // 0. Check if Demon is poisoned
-        if (isDemonImpaired) {
-          addLog(
-            `⚠️ Pendant la nuit, le Démon a attaqué ${target.name}, mais le Démon était empoisonné : son attaque a échoué ! Aucun mort.`,
-            'info'
-          );
-        }
-        // 1. Check if attack was blocked by Monk protection (ONLY if Monk was sober & healthy!)
-        else if (isProtectionEffective) {
-          addLog(
-            `🛡️ Pendant la nuit, l'attaque du Démon a été bloquée car ${target.name} était protégé(e) par le Prêtre ! Aucun mort.`,
-            'protection'
-          );
-        }
-        // 2. Check if attack was blocked by Soldier immunity
-        else if (target.roleId === 'soldat' && !target.isPoisoned) {
-          addLog(
-            `⚔️ Pendant la nuit, l'attaque du Démon a échoué sur l'armure du Soldat (${target.name}) ! Aucun mort.`,
-            'info'
-          );
-        }
-        // 3. Check Imp Suicide (Starpass)
-        else if (target.roleId === 'demon' || target.isNewDemon) {
-          actualKilledId = target.id;
-          // Demon dies
-          updatedPlayers = updatedPlayers.map((p) =>
-            p.id === target.id ? { ...p, isAlive: false, deathReason: 'night_kill' as const } : p
-          );
-
-          // Promote a living Minion to be the new Demon
-          const livingMinions = updatedPlayers.filter(
-            (p) =>
-              p.isAlive &&
-              (p.roleId === 'femme_ecarlate' ||
-                p.roleId === 'empoisonneur' ||
-                p.roleId === 'espion' ||
-                p.roleId === 'baron')
-          );
-
-          // Priority to Scarlet Woman, otherwise first available living minion
-          const nextDemon =
-            livingMinions.find((m) => m.roleId === 'femme_ecarlate') || livingMinions[0];
-
-          if (nextDemon) {
-            updatedPlayers = updatedPlayers.map((p) =>
-              p.id === nextDemon.id ? { ...p, roleId: 'demon' as const, isNewDemon: true } : p
-            );
-            addLog(
-              `💀 Le Démon s'est suicidé cette nuit (Starpass) ! ${nextDemon.name} (${ROLES[nextDemon.roleId]?.name}) prend la succession et devient le nouveau Démon ! Le Camp du Mal survit.`,
-              'action'
-            );
-          } else {
-            addLog(
-              `💀 Le Démon s'est suicidé cette nuit, mais aucun acolyte n'était en vie pour lui succéder !`,
-              'death'
-            );
-          }
-        }
-        // 4. Regular victim killed
-        else {
-          actualKilledId = target.id;
-          updatedPlayers = updatedPlayers.map((p) =>
-            p.id === target.id ? { ...p, isAlive: false, deathReason: 'night_kill' as const } : p
-          );
-          if (target.isProtected && isMoineImpaired) {
-            addLog(
-              `💀 Pendant la nuit, ${target.name} (${ROLES[target.roleId]?.name}) a été tué(e) par le Démon ! La protection du Prêtre a échoué car le Prêtre était ${moinePlayer?.isPoisoned ? 'empoisonné' : 'ivrogne'}.`,
-              'death'
-            );
-          } else if (target.roleId === 'soldat' && target.isPoisoned) {
-            addLog(
-              `💀 Pendant la nuit, le Soldat (${target.name}) a été tué par le Démon car son armure était inopérante (Soldat empoisonné).`,
-              'death'
-            );
-          } else {
-            addLog(`Pendant la nuit, ${target.name} (${ROLES[target.roleId]?.name}) a été tué(e) par le Démon.`, 'death');
-          }
-        }
+    if (summary?.apprentiTargetId) {
+      const apprenti = players.find(p => p.roleId === 'apprenti' && p.isAlive && !p.isPrisoner);
+      if (apprenti && !apprenti.isInformationPoisoned && !apprenti.isPoisoned) {
+        updatedPlayers = updatedPlayers.map(p =>
+          p.id === apprenti.id ? { ...p, linkedVoteTargetId: summary.apprentiTargetId } : p
+        );
       }
-    } else {
-      addLog('Pendant la nuit, aucun joueur n’est mort.', 'info');
+    }
+
+    const agent = players.find(p => p.roleId === 'agent_sous_couverture' && p.isAlive && !p.isPrisoner);
+    const agentPoisoned = !!(agent?.isInformationPoisoned || agent?.isPoisoned);
+    const target = summary?.recruitedPlayerId
+      ? players.find(p => p.id === summary.recruitedPlayerId)
+      : undefined;
+
+    if (target && agent && !agentPoisoned && !target.isPrisoner && !target.isInformateur) {
+      updatedPlayers = updatedPlayers.map(p =>
+        p.id === target.id
+          ? { ...p, isInformateur: true, currentTeam: 'Forces de l\'ordre' }
+          : p
+      );
+      addLog(`👮 ${target.name} a accepté le recrutement et devient Informateur.`, 'recruitment');
+    }
+
+    const prisonTargetId = summary?.imprisonedPlayerId;
+    if (prisonTargetId && agent && !agentPoisoned) {
+      const prisonTarget = players.find(p => p.id === prisonTargetId);
+      const avocateTargetId = summary?.avocateTargetId;
+      const avocate = players.find(p => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner);
+      const avocatePoisoned = !!(avocate?.isInformationPoisoned || avocate?.isPoisoned);
+      const protectedByAvocate = avocateTargetId === prisonTargetId && avocate && !avocatePoisoned;
+      const validTarget = prisonTarget &&
+        prisonTarget.isAlive &&
+        !prisonTarget.isPrisoner &&
+        prisonTarget.roleId !== 'agent_sous_couverture' &&
+        prisonTarget.roleId !== 'chauffeur' &&
+        !prisonTarget.isInformateur;
+
+      if (validTarget && !protectedByAvocate) {
+        updatedPlayers = updatedPlayers.map(p =>
+          p.id === prisonTargetId ? { ...p, isPrisoner: true } : p
+        );
+        addLog(`🚔 ${prisonTarget.name} a été envoyé en prison par l'Agent sous couverture.`, 'prison');
+      } else if (prisonTarget) {
+        addLog(`🛑 L'arrestation de ${prisonTarget.name} a échoué.`, 'info');
+      }
+    }
+
+    if (summary?.recruitedPlayerId && agentPoisoned) {
+      addLog('⚠️ L’Agent sous couverture était empoisonné : son recrutement a échoué, même s’il croit avoir réussi.', 'info');
     }
 
     setPlayers(updatedPlayers);
-    setLastNightKillPlayerId(actualKilledId);
-    setLastDayExecutedPlayerId(undefined); // Reset day execution for the upcoming day
-    setAvocatPlaidoyerActive(false); // Reset plaidoyer once resolved
+    setLastNightKillPlayerId(prisonTargetId);
+    setLastDayExecutedPlayerId(undefined);
+    setAvocatPlaidoyerActive(false);
 
-    // Check victory
     const vResult = checkVictory(updatedPlayers);
     if (vResult) {
       handleVictory(vResult);
       return;
     }
-
-    // Move to Day
     setGamePhase('day');
   };
 
@@ -423,141 +391,51 @@ export default function App() {
     addLog(`Début de la Nuit ${newNightNum}.`, 'info');
   };
 
-  // Execution handler during day
-  const handleExecutePlayer = (playerId: string) => {
-    const target = players.find((p) => p.id === playerId);
-    if (!target) return;
+  // Day execution and once-per-day special actions
+  const handleExecutePlayer = (playerId: string): boolean => {
+    const target = players.find(p => p.id === playerId);
+    if (!target || !target.isAlive || target.isPrisoner) return false;
+
+    if (target.isExecutionProtected) {
+      addLog(`🛡️ Le Garde du corps a empêché l’exécution de ${target.name}. Le vote doit être refait sans cette cible.`, 'protection');
+      const updated = players.map(p => p.id === target.id ? { ...p, isExecutionProtected: false } : p);
+      setPlayers(updated);
+      return false;
+    }
 
     setLastDayExecutedPlayerId(playerId);
-
-    // 1. Saint execution rule: If Saint is executed (and not poisoned/drunk), Evil wins immediately!
-    if (target.roleId === 'saint' && !target.isPoisoned && drunkPerceivedRoleId !== 'saint') {
-      const updated = players.map((p) =>
-        p.id === playerId ? { ...p, isAlive: false, deathReason: 'execution' as const } : p
-      );
-      setPlayers(updated);
-      addLog(`⚖️ Le Village a exécuté ${target.name} qui était le Saint ! Le Camp du Mal l’emporte immédiatement !`, 'death');
-      handleVictory({
-        winner: 'Camp du Mal',
-        reason: 'Le Saint a été exécuté sur le bûcher par le Village ! Le Camp du Mal l’emporte immédiatement.',
-      });
-      return;
-    }
-
-    // 2. Demon execution rule: Check Scarlet Woman inheritance
-    if (target.roleId === 'demon' || target.isNewDemon) {
-      let updated = players.map((p) =>
-        p.id === playerId ? { ...p, isAlive: false, deathReason: 'execution' as const } : p
-      );
-      const livingCountAfterDeath = updated.filter((p) => p.isAlive).length;
-      const scarletWoman = updated.find((p) => p.roleId === 'femme_ecarlate' && p.isAlive);
-
-      if (scarletWoman && livingCountAfterDeath >= 5) {
-        // Scarlet Woman becomes the new Demon!
-        updated = updated.map((p) =>
-          p.id === scarletWoman.id ? { ...p, roleId: 'demon' as const, isNewDemon: true } : p
-        );
-        setPlayers(updated);
-        addLog(
-          `⚖️ Le Démon (${target.name}) a été exécuté sur le bûcher ! Mais avec 5+ joueurs en vie, la Femme Écarlate (${scarletWoman.name}) devient le nouveau Démon ! La partie continue.`,
-          'action'
-        );
-        return;
-      } else {
-        // Demon dead and no Scarlet Woman takeover -> Village wins!
-        setPlayers(updated);
-        addLog(`⚖️ Le Démon (${target.name}) a été exécuté sur le bûcher ! Le Village est libéré !`, 'death');
-        handleVictory({
-          winner: 'Village',
-          reason: 'Le Démon a été éliminé sur le bûcher et le village l’emporte !',
-        });
-        return;
-      }
-    }
-
-    // 3. Regular player execution
-    const updated = players.map((p) =>
-      p.id === playerId ? { ...p, isAlive: false, deathReason: 'execution' as const } : p
+    const updated = players.map(p =>
+      p.id === playerId ? { ...p, isAlive: false, isPrisoner: false, deathReason: 'execution' as const } : p
     );
     setPlayers(updated);
-    addLog(`Le Village a exécuté ${target.name} (${ROLES[target.roleId]?.name}).`, 'death');
+    addLog(`⚖️ ${target.name} a été exécuté par vote (${ROLES[target.roleId]?.nom ?? target.roleId}).`, 'death');
 
     const vResult = checkVictory(updated, playerId);
-    if (vResult) {
-      handleVictory(vResult);
-    }
+    if (vResult) handleVictory(vResult);
+    return true;
   };
 
-  // Virgin trigger
-  const handleTriggerVirgin = (virginId: string, nominatorId: string) => {
-    const virginP = players.find((p) => p.id === virginId);
-    const nominatorP = players.find((p) => p.id === nominatorId);
-    if (!virginP || !nominatorP) return;
-
-    // Virgin only triggers if virgin is sober & nominator is Townsfolk
-    const nominatorRole = ROLES[nominatorP.roleId];
-    if (nominatorRole?.type === 'Villageois' && !virginP.isPoisoned && drunkPerceivedRoleId !== 'vierge') {
-      const updated = players.map((p) =>
-        p.id === nominatorId ? { ...p, isAlive: false, deathReason: 'vierge' as const } : p
-      );
-      setPlayers(updated);
-      addLog(
-        `Pouvoir de la Vierge déclenché ! ${nominatorP.name} (nominateur Villageois) est immédiatement exécuté(e). ${virginP.name} (la Vierge) prouve son innocence !`,
-        'death'
-      );
-
-      const vResult = checkVictory(updated);
-      if (vResult) {
-        handleVictory(vResult);
-      }
-    } else {
-      addLog(
-        `La nomination sur la Vierge n'a pas déclenché d'exécution (nominateur non-villageois ou Vierge empoisonnée).`,
-        'info'
-      );
-    }
-  };
-
-  // Hunter trigger
-  const handleTriggerHunter = (hunterId: string, targetId: string) => {
-    const hunterP = players.find((p) => p.id === hunterId);
-    const targetP = players.find((p) => p.id === targetId);
-    if (!hunterP || !targetP) return;
-
-    // Check if Hunter is poisoned or drunk
-    if (hunterP.isPoisoned || hunterP.roleId === 'ivrogne') {
-      addLog(`🏹 Le Chasseur a tiré sur ${targetP.name}, mais rien ne s'est produit (Chasseur empoisonné ou ivrogne).`, 'info');
-      return;
+  const handleTriggerTueurShot = (tueurPlayerId: string, targetPlayerId: string): boolean => {
+    const tueur = players.find(p => p.id === tueurPlayerId);
+    const target = players.find(p => p.id === targetPlayerId);
+    if (!tueur || !target || !tueur.isAlive || tueur.isPrisoner || tueur.hasUsedTueurAGages) return false;
+    if (!target.isAlive || target.isPrisoner) return false;
+    if (tueur.isInformationPoisoned || tueur.isPoisoned) {
+      addLog(`⚠️ Le Tueur à gages était empoisonné : son tir sur ${target.name} échoue.`, 'info');
+      setPlayers(players.map(p => p.id === tueur.id ? { ...p, hasUsedTueurAGages: true } : p));
+      return true;
     }
 
-    const isDemon = targetP.roleId === 'demon' || targetP.isNewDemon;
-    if (isDemon) {
-      let updated = players.map((p) =>
-        p.id === targetId ? { ...p, isAlive: false, deathReason: 'chasseur' as const } : p
-      );
-      const livingCountAfterDeath = updated.filter((p) => p.isAlive).length;
-      const scarletWoman = updated.find((p) => p.roleId === 'femme_ecarlate' && p.isAlive);
-
-      if (scarletWoman && livingCountAfterDeath >= 5) {
-        updated = updated.map((p) =>
-          p.id === scarletWoman.id ? { ...p, roleId: 'demon' as const, isNewDemon: true } : p
-        );
-        setPlayers(updated);
-        addLog(
-          `🏹 Le Chasseur a abattu le Démon (${targetP.name}) ! Cependant, avec 5+ joueurs en vie, la Femme Écarlate (${scarletWoman.name}) prend le relais et devient le nouveau Démon !`,
-          'action'
-        );
-      } else {
-        setPlayers(updated);
-        addLog(`🏹 Le Chasseur a tiré sur ${targetP.name}, qui était le Démon ! Coup fatal !`, 'death');
-        handleVictory({
-          winner: 'Village',
-          reason: 'Le Chasseur a éliminé le Démon d’un tir précis !',
-        });
-      }
-    } else {
-      addLog(`🏹 Le Chasseur a tiré sur ${targetP.name}, mais ce n’était pas le Démon !`, 'info');
-    }
+    const updated = players.map(p => {
+      if (p.id === tueur.id) return { ...p, hasUsedTueurAGages: true };
+      if (p.id === target.id) return { ...p, isAlive: false, isPrisoner: false, deathReason: 'tueur_a_gages' as const };
+      return p;
+    });
+    setPlayers(updated);
+    addLog(`🎯 Le Tueur à gages a exécuté ${target.name} sans vote.`, 'death');
+    const vResult = checkVictory(updated);
+    if (vResult) handleVictory(vResult);
+    return true;
   };
 
   // Full Reset & New Game
