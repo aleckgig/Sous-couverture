@@ -733,6 +733,7 @@ export default function App() {
                   onExecutePlayer={handleExecutePlayer}
                   onClearExecution={() => setLastDayExecutedPlayerId(undefined)}
                   onStartNight={handleStartNight}
+                  onUpdatePlayer={handleUpdatePlayer}
                   onTriggerTueurShot={handleTriggerTueurShot}
                 />
               )}
