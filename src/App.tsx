@@ -511,7 +511,7 @@ export default function App() {
     setLastDayExecutedPlayerId(undefined);
   };
 
-  const livingCount = players.filter((p) => p.isAlive).length;
+  const livingCount = players.filter((p) => p.isAlive && !p.isPrisoner).length;
 
   // If in Player View Mode (Phone Interface)
   if (appView === 'player') {
