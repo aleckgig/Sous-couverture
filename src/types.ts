@@ -119,6 +119,10 @@ export interface NightStep {
   reminder?: string;
   actionType: NightActionType;
   activePlayerIds?: string[];
+  /** True when this night step is the Junkie's simulation of their perceived role. */
+  isJunkieSimulation?: boolean;
+  /** The real role on the player's card when this is a simulated step. */
+  realRoleId?: RoleId;
 }
 
 export interface LogEntry {
