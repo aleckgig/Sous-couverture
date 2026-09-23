@@ -121,6 +121,109 @@ export function generateNightSteps(
   }
   push('hacker', 80, 'Le Hacker', 'Le Hacker choisit 2 joueurs. Répondez OUI si l’Agent ou la Fausse piste est parmi eux, sinon NON.', 'select_two_players',
     'La réponse est OUI si l’un des deux joueurs est l’Agent ou la Fausse piste.');
+
+  // The Junkie performs the nightly action of the role shown on their false card.
+  // Their real role remains "Junkie"; only the simulated power is used here.
+  const junkie = players.find(p =>
+    p.roleId === 'junkie' && p.isAlive && !p.isPrisoner && p.perceivedRoleId && p.perceivedRoleId !== 'junkie'
+  );
+  const perceived = junkie?.perceivedRoleId ? ROLES[junkie.perceivedRoleId] : undefined;
+
+  if (junkie && perceived) {
+    const order = (isFirstNight ? perceived.firstNightOrder : perceived.eachNightOrder) ?? 100;
+    const pushJunkie = (
+      roleId: RoleId,
+      instruction: string,
+      actionType: NightStep['actionType'],
+      reminder?: string,
+      stepOrder = order
+    ) => {
+      steps.push({
+        roleId,
+        order: stepOrder + 0.5,
+        title: `Le Junkie — croit être ${perceived.nom}`,
+        instruction,
+        reminder,
+        actionType,
+        activePlayerIds: [junkie.id],
+        isJunkieSimulation: true,
+        realRoleId: 'junkie',
+      });
+    };
+
+    switch (junkie.perceivedRoleId) {
+      case 'chimiste':
+        pushJunkie('chimiste',
+          'Le pouvoir du Junkie est réel : il choisit 1 joueur à empoisonner. Appliquez normalement l’empoisonnement.',
+          'select_player',
+          '⚠️ FAUSSE IDENTITÉ : le Junkie croit être Le Chimiste. Si le Junkie est empoisonné, son action échoue silencieusement.');
+        break;
+      case 'avocat_vereux':
+        pushJunkie('avocat_vereux',
+          'Le pouvoir du Junkie est réel : il choisit 1 joueur à protéger contre la prison cette nuit.',
+          'select_player',
+          '⚠️ FAUSSE IDENTITÉ : le Junkie croit être L’Avocate. Si le Junkie est empoisonné, la protection échoue silencieusement.');
+        break;
+      case 'apprenti':
+        pushJunkie('apprenti',
+          'Le pouvoir du Junkie est réel : il choisit 1 joueur à suivre lors du vote de demain.',
+          'select_player',
+          '⚠️ FAUSSE IDENTITÉ : le Junkie croit être L’Apprenti. Si le Junkie est empoisonné, son action échoue silencieusement.');
+        break;
+      case 'revendeur_armes':
+        if (isFirstNight) {
+          pushJunkie('revendeur_armes',
+            '⚠️ FAUSSE INFORMATION : montrez au Junkie une carte Perturbateur actuellement en jeu, mais pas la carte qui devrait lui être donnée.',
+            'info_only',
+            'Le Junkie croit être Le Revendeur d’armes. La révélation doit être fausse.');
+        }
+        break;
+      case 'agent_sous_couverture':
+        pushJunkie('agent_sous_couverture',
+          isFirstNight
+            ? 'Le pouvoir du Junkie est réel : il choisit de recruter 1 membre du Gang ou de ne rien faire.'
+            : 'Le pouvoir du Junkie est réel : il choisit de recruter 1 membre du Gang, d’en envoyer 1 en prison ou de ne rien faire.',
+          'agent_choice',
+          '⚠️ FAUSSE IDENTITÉ : le Junkie croit être l’Agent sous couverture. Si le Junkie est empoisonné, son action échoue silencieusement.');
+        break;
+      case 'trafiquant':
+        pushJunkie('trafiquant',
+          '⚠️ FAUSSE INFORMATION : indiquez au Junkie si au moins une personne a accepté un recrutement cette nuit. La réponse doit être fausse.',
+          'info_only',
+          'Le Junkie croit être Le Trafiquant. Sa donnée doit être fausse.');
+        break;
+      case 'blanchisseur':
+        pushJunkie('blanchisseur',
+          '⚠️ FAUSSE INFORMATION : indiquez au Junkie un nombre incorrect d’Informateurs.',
+          'info_only',
+          'Le Junkie croit être Le Blanchisseur. Sa donnée doit être fausse.');
+        break;
+      case 'nettoyeur':
+        if (!isFirstNight) {
+          pushJunkie('nettoyeur',
+            '⚠️ FAUSSE INFORMATION : montrez au Junkie une carte de rôle incorrecte pour l’exécution précédente.',
+            'info_only',
+            'Le Junkie croit être La Nettoyeuse. La carte montrée doit être fausse.');
+        }
+        break;
+      case 'pickpocket':
+        pushJunkie('pickpocket',
+          '⚠️ FAUSSE INFORMATION : indiquez au Junkie 0, 1 ou 2, mais la valeur doit être incorrecte.',
+          'info_only',
+          'Le Junkie croit être Le Pickpocket. La donnée doit être fausse.');
+        break;
+      case 'hacker':
+        pushJunkie('hacker',
+          'Le Junkie choisit 2 joueurs. ⚠️ FAUSSE INFORMATION : répondez OUI ou NON, mais la réponse doit être fausse.',
+          'select_two_players',
+          'Le Junkie croit être Le Hacker. Le résultat de son investigation doit être faux.');
+        break;
+      default:
+        // Passive/day roles do not create a night step.
+        break;
+    }
+  }
+
   return steps.sort((a, b) => a.order - b.order);
 }
 
