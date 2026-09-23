@@ -57,6 +57,13 @@ export function getPerturbateursCount(players: Player[]): number {
   return players.filter(p => p.currentTeam === 'Gang' && ROLES[p.roleId]?.isPerturbateur && p.isAlive && !p.isPrisoner).length;
 }
 
+export function getActivePerturbatorRoleIds(players: Player[]): RoleId[] {
+  const ids = players
+    .filter((p) => p.isAlive && !p.isPrisoner && ROLES[p.roleId]?.isPerturbateur)
+    .map((p) => p.roleId);
+  return Array.from(new Set(ids));
+}
+
 export function getActivePlayers(players: Player[]): Player[] {
   return players.filter(p => p.isAlive && !p.isPrisoner);
 }
