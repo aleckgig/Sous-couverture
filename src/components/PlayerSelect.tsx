@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import { Player } from '../types';
 import { ROLES } from '../data/roles';
@@ -15,6 +16,14 @@ interface PlayerSelectProps {
   accent?: 'default' | 'blue' | 'red' | 'purple' | 'amber';
 }
 
+interface MenuPosition {
+  left: number;
+  width: number;
+  top?: number;
+  bottom?: number;
+  maxHeight: number;
+}
+
 export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   value,
   onChange,
@@ -27,9 +36,9 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   accent = 'default',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const accentClasses = {
     default: {
@@ -67,64 +76,143 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
   const availablePlayers = players.filter(
     (player) => player.id !== excludePlayerId && !disabledPlayerIds.includes(player.id)
   );
-
   const selectedPlayer = availablePlayers.find((player) => player.id === value);
-  const normalizedSearch = search.trim().toLocaleLowerCase('fr-CA');
-  const filteredPlayers = normalizedSearch
-    ? availablePlayers.filter((player) => {
-        const roleName = ROLES[player.roleId]?.nom ?? player.roleId;
-        return `${player.name} ${roleName}`.toLocaleLowerCase('fr-CA').includes(normalizedSearch);
-      })
-    : availablePlayers;
+
+  const updateMenuPosition = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const gap = 8;
+    const viewportPadding = 8;
+    const desiredHeight = Math.min(420, Math.max(180, availablePlayers.length * 62 + 12));
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - gap - viewportPadding);
+    const spaceAbove = Math.max(0, rect.top - gap - viewportPadding);
+    const openUp = spaceBelow < Math.min(desiredHeight, 300) && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(140, Math.min(desiredHeight, openUp ? spaceAbove : spaceBelow));
+
+    setMenuPosition(
+      openUp
+        ? {
+            left: rect.left,
+            width: rect.width,
+            bottom: window.innerHeight - rect.top + gap,
+            maxHeight,
+          }
+        : {
+            left: rect.left,
+            width: rect.width,
+            top: rect.bottom + gap,
+            maxHeight,
+          }
+    );
+  };
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    updateMenuPosition();
+  }, [isOpen, availablePlayers.length]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      const menu = document.querySelector('[data-player-select-menu="true"]');
+      if (menu?.contains(target)) return;
+      setIsOpen(false);
     };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-      }
+      if (event.key === 'Escape') setIsOpen(false);
     };
 
+    const handleViewportChange = () => updateMenuPosition();
+
+    document.addEventListener('pointerdown', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+    };
+  }, [isOpen, availablePlayers.length]);
 
   const choosePlayer = (playerId: string) => {
     onChange(playerId);
-    setSearch('');
     setIsOpen(false);
   };
+
+  const menu = isOpen && menuPosition
+    ? createPortal(
+        <div
+          data-player-select-menu="true"
+          role="listbox"
+          aria-label={placeholder}
+          className="fixed z-[100] overflow-y-auto overscroll-contain rounded-2xl border border-stone-200 bg-[#faf8f2] p-1.5 shadow-[0_16px_40px_rgba(30,25,18,0.22)]"
+          style={{
+            left: menuPosition.left,
+            width: menuPosition.width,
+            top: menuPosition.top,
+            bottom: menuPosition.bottom,
+            maxHeight: menuPosition.maxHeight,
+          }}
+        >
+          {availablePlayers.length === 0 ? (
+            <div className="px-3.5 py-4 text-center text-sm font-medium text-stone-500">
+              Aucun joueur disponible.
+            </div>
+          ) : (
+            availablePlayers.map((player) => {
+              const roleName = ROLES[player.roleId]?.nom ?? player.roleId;
+              const selected = player.id === value;
+
+              return (
+                <button
+                  key={player.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => choosePlayer(player.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3.5 text-left transition ${
+                    selected ? accentClasses.selected : 'hover:bg-stone-100 active:bg-stone-200'
+                  }`}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[16px] font-black leading-tight text-stone-900">
+                      {player.name}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12px] font-medium leading-tight text-stone-500">
+                      {roleName}
+                    </span>
+                  </span>
+                  {selected && <Check className={`h-5 w-5 shrink-0 ${accentClasses.check}`} />}
+                </button>
+              );
+            })
+          )}
+        </div>,
+        document.body
+      )
+    : null;
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        onClick={() => {
-          setIsOpen((open) => {
-            const next = !open;
-            if (next) window.setTimeout(() => searchRef.current?.focus(), 0);
-            else setSearch('');
-            return next;
-          });
-        }}
-        className={`w-full min-h-[58px] rounded-xl border bg-[#faf8f2] px-4 py-2.5 text-left shadow-sm outline-none transition ring-0 focus:ring-4 ${isOpen ? accentClasses.open : accentClasses.border}`}
+        onClick={() => setIsOpen((open) => !open)}
+        className={`w-full min-h-[58px] rounded-xl border bg-[#faf8f2] px-4 py-2.5 text-left shadow-sm outline-none transition ring-0 focus:ring-4 ${
+          isOpen ? accentClasses.open : accentClasses.border
+        }`}
       >
         {selectedPlayer ? (
           <span className="block min-w-0 pr-7">
@@ -136,76 +224,17 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
             </span>
           </span>
         ) : (
-          <span className="block pr-7 text-[16px] font-semibold text-stone-500">
-            {placeholder}
-          </span>
+          <span className="block pr-7 text-[16px] font-semibold text-stone-500">{placeholder}</span>
         )}
 
         <ChevronDown
-          className={`pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-stone-500 transition-transform ${
+            isOpen ? 'rotate-180' : ''
+          }`}
         />
       </button>
 
-      {isOpen && (
-        <div
-          role="listbox"
-          aria-label={placeholder}
-          className="absolute left-0 right-0 z-50 mt-2 max-h-[min(52dvh,420px)] overflow-y-auto overscroll-contain rounded-2xl border border-stone-200 bg-[#faf8f2] p-1.5 shadow-[0_12px_35px_rgba(30,25,18,0.16)]"
-        >
-          <div className="px-2 pt-1 pb-2">
-            <input
-              ref={searchRef}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Rechercher un joueur…"
-              className="w-full rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-[15px] font-medium text-stone-900 outline-none placeholder:text-stone-400 focus:border-stone-400"
-              aria-label="Rechercher un joueur"
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  setSearch('');
-                  setIsOpen(false);
-                }
-              }}
-            />
-          </div>
-          <button
-            type="button"
-            role="option"
-            aria-selected={!value}
-            onClick={() => choosePlayer('')}
-            className={`w-full rounded-xl px-3.5 py-3 text-left transition ${!value ? accentClasses.selected : 'hover:bg-stone-100'}`}
-          >
-            <span className="block text-[15px] font-semibold text-stone-500">{placeholder}</span>
-          </button>
-
-          {filteredPlayers.map((player) => {
-            const roleName = ROLES[player.roleId]?.nom ?? player.roleId;
-            const selected = player.id === value;
-
-            return (
-              <button
-                key={player.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => choosePlayer(player.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left transition ${selected ? accentClasses.selected : 'hover:bg-stone-100 active:bg-stone-200'}`}
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-black leading-tight text-stone-900">
-                    {player.name}
-                  </span>
-                  <span className="mt-0.5 block truncate text-[12px] font-medium leading-tight text-stone-500">
-                    {roleName}
-                  </span>
-                </span>
-                {selected && <Check className={`h-5 w-5 shrink-0 ${accentClasses.check}`} />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {menu}
     </div>
   );
 };
