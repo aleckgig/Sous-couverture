@@ -286,6 +286,18 @@ export default function App() {
     chimisteTargetId?: string;
     apprentiTargetId?: string;
     avocateTargetId?: string;
+    junkieAction?: {
+      perceivedRoleId: RoleId;
+      chimisteTargetId?: string;
+      apprentiTargetId?: string;
+      avocateTargetId?: string;
+      hackerTargetOneId?: string;
+      hackerTargetTwoId?: string;
+      agentActionType?: 'none' | 'recruit' | 'prison';
+      agentTargetId?: string;
+      recruitmentAccepted?: boolean | null;
+      imprisonedPlayerId?: string;
+    };
   }) => {
     let updatedPlayers = players.map(p => ({
       ...p,
