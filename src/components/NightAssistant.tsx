@@ -132,8 +132,10 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const isFirstNight = nightCount === 1;
   const isLastStep = currentStepIndex >= steps.length - 1;
 
-  if (!currentStep || steps.length === 0) {
-    const roleImage = DEFAULT_ROLE_IMAGE_MAP[currentStep.roleId];
+  const role = currentStep ? ROLES[currentStep.roleId] : undefined;
+  const actingPlayer = currentStep ? players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner) : undefined;
+  const isImpairedByChimiste = Boolean(actingPlayer && chimisteTargetId && actingPlayer.id === chimisteTargetId);
+  const roleImage = currentStep ? DEFAULT_ROLE_IMAGE_MAP[currentStep.roleId] : undefined;
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const roleAccent =
     role?.camp_initial === 'Forces de l'ordre'
