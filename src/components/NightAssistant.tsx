@@ -151,6 +151,139 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     backgroundRepeat: 'no-repeat',
   } as React.CSSProperties;
 
+  const handlePrevStep = () => {
+    if (currentStep?.roleId === 'agent_sous_couverture' && agentFlowStep > 0) {
+      setAgentFlowStep((prev) => prev - 1);
+      return;
+    }
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (!currentStep) return;
+
+    // Sub-flow for agent_sous_couverture
+    if (currentStep.roleId === 'agent_sous_couverture') {
+      if (agentFlowStep === 0) {
+        if (!agentActionChosen) {
+          setValidationModal({
+            isOpen: true,
+            title: 'Action requise',
+            message: 'Veuillez choisir une action pour l’Agent sous couverture.',
+          });
+          return;
+        }
+        if (agentActionType === 'none') {
+          if (isLastStep) {
+            handleFinish();
+          } else {
+            setCurrentStepIndex((prev) => prev + 1);
+          }
+          return;
+        }
+        setAgentFlowStep(1);
+        return;
+      }
+
+      if (agentFlowStep === 1) {
+        if (!agentTargetId) {
+          setValidationModal({
+            isOpen: true,
+            title: 'Joueur requis',
+            message:
+              agentActionType === 'recruit'
+                ? 'Veuillez sélectionner le joueur à recruter.'
+                : 'Veuillez sélectionner le joueur à envoyer en prison.',
+          });
+          return;
+        }
+        if (agentActionType === 'recruit') {
+          setAgentFlowStep(2);
+          return;
+        }
+        if (agentActionType === 'prison') {
+          const target = players.find((p) => p.id === agentTargetId);
+          if (isImpairedByChimiste) {
+            setNoticeMessage('L’Agent est empoisonné : son arrestation échouera silencieusement.');
+            setImprisonedPlayerId(undefined);
+          } else if (target?.roleId === 'chauffeur') {
+            setNoticeMessage(`Le Chauffeur (${target.name}) est immunisé contre la prison.`);
+            setImprisonedPlayerId(undefined);
+          } else if (target) {
+            setNoticeMessage(`${target.name} sera envoyé en prison.`);
+            setImprisonedPlayerId(target.id);
+          }
+          setAgentFlowStep(3);
+          return;
+        }
+      }
+
+      if (agentFlowStep === 2) {
+        if (recruitmentAcceptedTonight === null) {
+          setValidationModal({
+            isOpen: true,
+            title: 'Réponse requise',
+            message: 'Veuillez indiquer si le joueur accepte ou refuse le recrutement.',
+          });
+          return;
+        }
+        setAgentFlowStep(3);
+        return;
+      }
+
+      if (agentFlowStep === 3) {
+        if (isLastStep) {
+          handleFinish();
+        } else {
+          setCurrentStepIndex((prev) => prev + 1);
+        }
+        return;
+      }
+    }
+
+    // Role-specific validations
+    if (currentStep.roleId === 'chimiste' && !chimisteTargetId) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Cible du Chimiste requise',
+        message: 'Sélectionnez le joueur que le Chimiste empoisonne.',
+      });
+      return;
+    }
+    if (currentStep.roleId === 'apprenti' && !apprentiTargetId) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Cible de l’Apprenti requise',
+        message: 'Sélectionnez le joueur que l’Apprenti doit suivre demain.',
+      });
+      return;
+    }
+    if (currentStep.roleId === 'avocat_vereux' && !avocateTargetId) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Cible de l’Avocate requise',
+        message: 'Sélectionnez le joueur à protéger contre la prison.',
+      });
+      return;
+    }
+    if (currentStep.roleId === 'hacker' && (!hackerTargetOneId || !hackerTargetTwoId)) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Sélection du Hacker requise',
+        message: 'Veuillez sélectionner les 2 joueurs désignés par le Hacker.',
+      });
+      return;
+    }
+
+    if (isLastStep) {
+      handleFinish();
+    } else {
+      setCurrentStepIndex((prev) => prev + 1);
+    }
+  };
+
   const actionLabel =
     agentFlowStep === 0 ? 'Choisissez une action' :
     agentFlowStep === 1 ? (agentActionType === 'recruit' ? 'Choisissez un joueur à recruter' : 'Choisissez un joueur à envoyer en prison') :
