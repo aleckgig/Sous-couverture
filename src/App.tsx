@@ -295,7 +295,7 @@ export default function App() {
     }));
 
     const chimiste = players.find(p => p.roleId === 'chimiste' && p.isAlive && !p.isPrisoner);
-    const chimistePoisoned = !!(chimiste?.isInformationPoisoned || chimiste?.isPoisoned);
+    const chimistePoisoned = !!(chimiste && summary?.chimisteTargetId === chimiste.id);
     if (summary?.chimisteTargetId && !chimistePoisoned) {
       updatedPlayers = updatedPlayers.map(p =>
         p.id === summary.chimisteTargetId
@@ -314,7 +314,7 @@ export default function App() {
     }
 
     const agent = players.find(p => p.roleId === 'agent_sous_couverture' && p.isAlive && !p.isPrisoner);
-    const agentPoisoned = !!(agent?.isInformationPoisoned || agent?.isPoisoned);
+    const agentPoisoned = !!(agent && (agent.isInformationPoisoned || agent.isPoisoned || summary?.chimisteTargetId === agent.id));
     const target = summary?.recruitedPlayerId
       ? players.find(p => p.id === summary.recruitedPlayerId)
       : undefined;
@@ -333,7 +333,7 @@ export default function App() {
       const prisonTarget = players.find(p => p.id === prisonTargetId);
       const avocateTargetId = summary?.avocateTargetId;
       const avocate = players.find(p => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner);
-      const avocatePoisoned = !!(avocate?.isInformationPoisoned || avocate?.isPoisoned);
+      const avocatePoisoned = !!(avocate && (avocate.isInformationPoisoned || avocate.isPoisoned || summary?.chimisteTargetId === avocate.id));
       const protectedByAvocate = avocateTargetId === prisonTargetId && avocate && !avocatePoisoned;
       const validTarget = prisonTarget &&
         prisonTarget.isAlive &&
