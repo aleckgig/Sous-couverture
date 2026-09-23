@@ -455,15 +455,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                       setImprisonedPlayerId(undefined);
                       return;
                     }
-                    const isProtected = gardeTargetId === target.id;
                     if (isImpairedByChimiste) {
                       setNoticeMessage('L’Agent est empoisonné : il croit que l’arrestation réussit, mais elle échoue.');
                       setImprisonedPlayerId(undefined);
                     } else if (target.roleId === 'chauffeur') {
                       setNoticeMessage(`Le Chauffeur (${target.name}) est immunisé contre la prison.`);
-                      setImprisonedPlayerId(undefined);
-                    } else if (isProtected) {
-                      setNoticeMessage(`${target.name} est protégé cette nuit.`);
                       setImprisonedPlayerId(undefined);
                     } else {
                       setNoticeMessage(`${target.name} sera envoyé en prison.`);
