@@ -390,11 +390,12 @@ export default function App() {
       const protectedByJunkieAvocate = junkieAction?.perceivedRoleId === 'avocat_vereux' &&
         !junkiePoisoned &&
         junkieAction.avocateTargetId === prisonTargetId;
+      const targetIsChauffeur = prisonTarget.roleId === 'chauffeur' || prisonTarget.perceivedRoleId === 'chauffeur';
       const validTarget = prisonTarget &&
         prisonTarget.isAlive &&
         !prisonTarget.isPrisoner &&
         prisonTarget.roleId !== 'agent_sous_couverture' &&
-        prisonTarget.roleId !== 'chauffeur' &&
+        !targetIsChauffeur &&
         !prisonTarget.isInformateur;
 
       if (validTarget && !protectedByAvocate && !protectedByJunkieAvocate) {
