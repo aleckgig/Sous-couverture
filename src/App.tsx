@@ -438,11 +438,13 @@ export default function App() {
             }
           }
           if (junkieAction.agentActionType === 'prison' && target) {
+            const targetIsChauffeur = target.roleId === 'chauffeur' || target.perceivedRoleId === 'chauffeur';
             const valid = target.isAlive && !target.isPrisoner &&
-              target.roleId !== 'chauffeur' &&
+              !targetIsChauffeur &&
               target.roleId !== 'agent_sous_couverture' &&
               !target.isInformateur &&
-              target.roleId !== 'homme_de_main';
+              target.roleId !== 'homme_de_main' &&
+              target.perceivedRoleId !== 'homme_de_main';
             const protectedByAvocate = updatedPlayers.find(p => p.id === target.id)?.isProtected;
             if (valid && !protectedByAvocate) {
               updatedPlayers = updatedPlayers.map(p =>
