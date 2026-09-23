@@ -21,6 +21,7 @@ import { Player, RoleId } from '../types';
 import { ROLES } from '../data/roles';
 import { ValidationAlertModal } from './ValidationAlertModal';
 import { canPrisonersVoteDuringDay } from '../utils/rulesConfig';
+import { PlayerSelect } from './PlayerSelect';
 
 interface DayAssistantProps {
   dayCount: number;
@@ -186,51 +187,26 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5 animate-in fade-in duration-150 text-stone-100">
-      {/* 1. TOP HERO BADGE: DAY HIGHLIGHT */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-3xl p-5 sm:p-7 shadow-2xl text-stone-950 flex flex-col sm:flex-row items-center justify-between gap-4 border-2 border-amber-300">
-        <div className="flex items-center gap-4 text-center sm:text-left">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-stone-950 text-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-xl shrink-0 border border-amber-300">
-            ☀️
+    <div className="h-full flex flex-col animate-in fade-in duration-150 text-stone-900">
+      {/* DAY COMPACT HEADER */}
+      <div className="shrink-0 flex items-center justify-between gap-3 border-b border-stone-200 pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-800">
+            <Sun className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-stone-900 bg-amber-400/80 px-3 py-0.5 rounded-full inline-block mb-1">
-              Phase de Journée • Sous Couverture
-            </span>
-            <h1 className="font-serif font-black text-3xl sm:text-5xl text-stone-950 tracking-tight">
-              JOUR {dayCount}
-            </h1>
-            <p className="text-xs sm:text-sm text-stone-900 font-bold mt-0.5">
-              Débats du Gang, plaidoyers secrets & vote d'élimination
-            </p>
+            <div className="text-[10px] uppercase tracking-[0.16em] font-black text-stone-400">Phase de jour</div>
+            <h1 className="text-lg font-black tracking-tight text-stone-900 leading-none">Jour {dayCount}</h1>
           </div>
         </div>
-
-        <div className="flex gap-2 shrink-0">
-          <div className="bg-stone-950 text-amber-200 px-3.5 py-2.5 rounded-2xl border border-amber-400/40 text-center shadow-lg">
-            <span className="text-[9px] text-stone-400 font-black uppercase block tracking-wider">
-              Libres
-            </span>
-            <span className="text-lg sm:text-xl font-black text-white flex items-center justify-center gap-1 mt-0.5">
-              <Users className="w-4 h-4 text-amber-400" />
-              <span>{freeLivingPlayers.length}</span>
-            </span>
-          </div>
-
-          <div className="bg-stone-950 text-red-300 px-3.5 py-2.5 rounded-2xl border border-red-500/40 text-center shadow-lg">
-            <span className="text-[9px] text-red-400 font-black uppercase block tracking-wider">
-              En Prison
-            </span>
-            <span className="text-lg sm:text-xl font-black text-white flex items-center justify-center gap-1 mt-0.5">
-              <span>🚔</span>
-              <span>{prisoners.length}</span>
-            </span>
-          </div>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold">
+          <span className="px-2 py-1 rounded-lg bg-white border border-stone-200 text-stone-700">{freeLivingPlayers.length} libres</span>
+          <span className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">{prisoners.length} prison</span>
         </div>
       </div>
 
       {/* MINUTEUR / DÉBATS */}
-      <div className="bg-stone-900 border border-amber-500/40 rounded-2xl px-4 py-2.5 shadow-lg flex items-center justify-center gap-2 sm:gap-3 text-stone-100 flex-wrap">
+      <div className="shrink-0 bg-white border border-stone-200 rounded-2xl px-3 py-2 shadow-sm flex items-center justify-center gap-2 text-stone-800">
         <button
           type="button"
           onClick={() => handleAdjustMinutes(-1)}
@@ -302,137 +278,61 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
       </div>
 
       {/* MORNING ANNOUNCEMENT */}
-      <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-3">
-        <div className="flex items-center gap-2.5 border-b border-stone-800 pb-3">
-          <span className="text-xl">🌅</span>
-          <h2 className="font-serif font-black text-lg sm:text-xl text-white">
-            Annonce du Matin au Gang
-          </h2>
+      <div className="shrink-0 rounded-2xl border border-stone-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-sm">🌅</span>
+          <span className="text-[10px] uppercase tracking-widest font-black text-stone-400">Annonce du matin</span>
         </div>
-
         {imprisonedTonight ? (
-          <div className="bg-amber-950/80 border-2 border-amber-500/80 rounded-2xl p-4 sm:p-5 flex items-center gap-4 text-amber-200 shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-amber-900/90 border border-amber-400 flex items-center justify-center text-amber-100 shrink-0 text-2xl">
-              🚔
-            </div>
-            <div>
-              <span className="text-[10px] text-amber-300 font-black uppercase tracking-wider block">
-                Arrestation nocturne :
-              </span>
-              <h3 className="font-bold text-base sm:text-lg text-white">
-                {imprisonedTonight.name} a été envoyé(e) en prison cette nuit !
-              </h3>
-              <p className="text-xs text-amber-300/90 mt-0.5">
-                Dites à haute voix : « La ville se réveille... {imprisonedTonight.name} a été arrêté(e) par la police cette nuit ! Il est placé en détention. »
-              </p>
-            </div>
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-2.5">
+            <div className="text-xs font-black text-stone-900">{imprisonedTonight.name} est en prison.</div>
+            <div className="text-[10px] text-stone-500 mt-0.5">Annoncez son arrestation à la table.</div>
           </div>
         ) : (
-          <div className="bg-emerald-950/80 border-2 border-emerald-500/80 rounded-2xl p-4 sm:p-5 flex items-center gap-4 text-emerald-200 shadow-lg">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-900/90 border border-emerald-400 flex items-center justify-center text-emerald-100 shrink-0">
-              <CheckCircle2 className="w-7 h-7" />
-            </div>
-            <div>
-              <span className="text-[10px] text-emerald-300 font-black uppercase tracking-wider block">
-                Nuit sans arrestation :
-              </span>
-              <h3 className="font-bold text-base sm:text-lg text-white">
-                Aucune arrestation signalée cette nuit !
-              </h3>
-              <p className="text-xs text-emerald-300/90 mt-0.5">
-                Dites à haute voix : « La ville se réveille. Tout le monde est présent autour de la table aujourd'hui. »
-              </p>
-            </div>
+          <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-2.5">
+            <div className="text-xs font-black text-stone-900">Aucune arrestation cette nuit.</div>
+            <div className="text-[10px] text-stone-500 mt-0.5">Annoncez que tout le monde est présent.</div>
           </div>
         )}
-
-        {/* PRISONERS STATUS LIST */}
         {prisoners.length > 0 && (
-          <div className="mt-3 p-3 bg-stone-950 rounded-2xl border border-stone-800 flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-stone-300">
-              <span className="text-base">🚔</span>
-              <span>
-                <strong>Joueur(s) en prison :</strong>{' '}
-                {prisoners.map((p) => p.name).join(', ')}
-              </span>
-            </div>
-            <span className="text-[10px] text-stone-400 italic">
-              (Ne peuvent ni parler, ni voter, ni être exécutés)
-            </span>
-          </div>
+          <div className="mt-2 text-[10px] text-stone-500"><strong>En prison :</strong> {prisoners.map((p) => p.name).join(', ')}</div>
         )}
       </div>
 
       {/* ACTIONS SPÉCIALES DU JOUR */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {tueurPlayer && (
-          <div className="bg-stone-900 border border-red-500/40 rounded-3xl p-4 space-y-3 shadow-lg">
-            <div className="flex items-center gap-2">
-              <Crosshair className="w-5 h-5 text-red-400" />
-              <h3 className="font-bold text-sm text-white font-serif">Le Tueur à gages — {tueurPlayer.name}</h3>
+      {(tueurPlayer || gardePlayer) && (
+        <div className="shrink-0 grid grid-cols-2 gap-2">
+          {tueurPlayer && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-2.5 space-y-2">
+              <div className="flex items-center gap-1.5"><Crosshair className="w-4 h-4 text-red-700" /><span className="text-[11px] font-black text-stone-900 truncate">Tueur à gages</span></div>
+              {tueurPlayer.hasUsedTueurAGages ? <div className="text-[10px] text-stone-500">Pouvoir utilisé.</div> : <>
+                <PlayerSelect value={tueurTargetId} onChange={setTueurTargetId} players={freeLivingPlayers.filter(p => p.id !== tueurPlayer.id)} placeholder="Cible…" accent="red" />
+                <button type="button" disabled={!tueurTargetId} onClick={() => { if (tueurTargetId) { onTriggerTueurShot?.(tueurPlayer.id, tueurTargetId); setTueurTargetId(''); } }} className="w-full py-2 rounded-lg bg-red-700 text-white font-black text-[10px] disabled:opacity-40">Exécuter</button>
+              </>}
             </div>
-            <p className="text-xs text-stone-300">Une fois par partie, il peut exécuter immédiatement un joueur libre, sans vote.</p>
-            {tueurPlayer.hasUsedTueurAGages ? (
-              <div className="text-xs text-stone-400 bg-stone-950 border border-stone-800 rounded-xl p-3">Pouvoir déjà utilisé.</div>
-            ) : (
-              <>
-                <select value={tueurTargetId} onChange={e => setTueurTargetId(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-3 text-sm text-white">
-                  <option value="">— Choisir une cible —</option>
-                  {freeLivingPlayers.filter(p => p.id !== tueurPlayer.id).map(p =>
-                    <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
-                  )}
-                </select>
-                <button type="button" disabled={!tueurTargetId}
-                  onClick={() => { if (tueurTargetId) { onTriggerTueurShot?.(tueurPlayer.id, tueurTargetId); setTueurTargetId(''); } }}
-                  className="w-full py-3 rounded-xl bg-red-700 text-white font-black text-xs disabled:opacity-40">
-                  Exécuter immédiatement
-                </button>
-              </>
-            )}
-          </div>
-        )}
-        {gardePlayer && (
-          <div className="bg-stone-900 border border-blue-500/40 rounded-3xl p-4 space-y-3 shadow-lg">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-blue-400" />
-              <h3 className="font-bold text-sm text-white font-serif">Le Garde du corps — {gardePlayer.name}</h3>
+          )}
+          {gardePlayer && (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-2.5 space-y-2">
+              <div className="flex items-center gap-1.5"><ShieldAlert className="w-4 h-4 text-blue-700" /><span className="text-[11px] font-black text-stone-900 truncate">Garde du corps</span></div>
+              {gardePlayer.hasUsedGardeDuCorps ? <div className="text-[10px] text-stone-500">Pouvoir utilisé.</div> : <>
+                <PlayerSelect value={gardeTargetId} onChange={setGardeTargetId} players={freeLivingPlayers.filter(p => p.id !== gardePlayer.id)} placeholder="Protéger…" accent="blue" />
+                <button type="button" disabled={!gardeTargetId} onClick={() => {
+                  if (!gardeTargetId) return;
+                  const target = players.find((p) => p.id === gardeTargetId);
+                  if (target) {
+                    onUpdatePlayer?.({ ...target, isExecutionProtected: true });
+                    onUpdatePlayer?.({ ...gardePlayer, hasUsedGardeDuCorps: true });
+                  }
+                  setGardeTargetId('');
+                }} className="w-full py-2 rounded-lg bg-blue-700 text-white font-black text-[10px] disabled:opacity-40">Protéger</button>
+              </>}
             </div>
-            <p className="text-xs text-stone-300">Une fois par partie, il peut empêcher l’exécution d’un joueur. Le vote devra alors être refait sans cette cible.</p>
-            {gardePlayer.hasUsedGardeDuCorps ? (
-              <div className="text-xs text-stone-400 bg-stone-950 border border-stone-800 rounded-xl p-3">Pouvoir déjà utilisé.</div>
-            ) : (
-              <>
-                <select
-                  value={gardeTargetId}
-                  onChange={e => setGardeTargetId(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-3 text-sm text-white">
-                  <option value="">— Choisir un joueur à protéger —</option>
-                  {freeLivingPlayers.filter(p => p.id !== gardePlayer.id).map(p =>
-                    <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
-                  )}
-                </select>
-                <button type="button" disabled={!gardeTargetId}
-                  onClick={() => {
-                    if (!gardeTargetId) return;
-                    const target = players.find(p => p.id === gardeTargetId);
-                    if (target) {
-                      onUpdatePlayer?.({ ...target, isExecutionProtected: true });
-                      onUpdatePlayer?.({ ...gardePlayer, hasUsedGardeDuCorps: true });
-                    }
-                    setGardeTargetId('');
-                  }}
-                  className="w-full py-3 rounded-xl bg-blue-700 text-white font-black text-xs disabled:opacity-40">
-                  Empêcher l’exécution de ce joueur
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* VOTE DU GANG & ÉLIMINATION */}
-      <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-transparent space-y-2 py-1 overscroll-contain">
         <div className="flex items-center justify-between border-b border-stone-800 pb-3">
           <div className="flex items-center gap-2.5">
             <span className="text-xl">⚖️</span>
@@ -516,7 +416,7 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
               Sélectionnez le joueur condamné par le vote du Gang :
             </span>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 gap-2">
               {freeLivingPlayers.map((p) => {
                 const isSelected = selectedExecuteId === p.id;
                 const isCaid = p.roleId === 'caid';
@@ -611,13 +511,13 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
           type="button"
           onClick={handleTryStartNight}
           id="btn-start-next-night"
-          className="w-full py-4 sm:py-5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-800 hover:from-indigo-500 hover:to-purple-700 active:scale-95 text-white font-black shadow-2xl shadow-indigo-950 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer border border-indigo-400/40"
+          className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 active:scale-95 text-white font-black shadow transition-all cursor-pointer"
         >
-          <span className="text-lg sm:text-xl font-black flex items-center justify-center gap-2 leading-none">
+          <span className="text-sm font-black flex items-center justify-center gap-2 leading-none">
             <span>🌙</span>
             <span>Endormir la Ville</span>
           </span>
-          <span className="text-xs sm:text-sm font-semibold text-indigo-200 leading-none">
+          <span className="text-[10px] font-semibold text-stone-400 leading-none">
             (Lancer la Nuit {dayCount + 1})
           </span>
         </button>
