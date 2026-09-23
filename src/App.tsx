@@ -356,6 +356,90 @@ export default function App() {
       addLog('⚠️ L’Agent sous couverture était empoisonné : son recrutement a échoué, même s’il croit avoir réussi.', 'info');
     }
 
+    // The Junkie uses the power of their perceived role for the whole game.
+    // Their real role remains Junkie. If the Junkie is poisoned, the simulated action
+    // fails silently, while any information they receive is handled as false by the storyteller UI.
+    const junkie = players.find(p => p.roleId === 'junkie' && p.isAlive && !p.isPrisoner);
+    const junkieAction = summary?.junkieAction;
+    const junkiePoisoned = !!(junkie && (
+      summary?.chimisteTargetId === junkie.id ||
+      junkie.isInformationPoisoned ||
+      junkie.isPoisoned
+    ));
+
+    if (junkie && junkieAction && !junkiePoisoned) {
+      switch (junkieAction.perceivedRoleId) {
+        case 'chimiste':
+          if (junkieAction.chimisteTargetId) {
+            updatedPlayers = updatedPlayers.map(p =>
+              p.id === junkieAction.chimisteTargetId
+                ? { ...p, isInformationPoisoned: true, isPoisoned: true }
+                : p
+            );
+            addLog(\`🧪 Le Junkie a appliqué le pouvoir du Chimiste sur \${players.find(p => p.id === junkieAction.chimisteTargetId)?.name ?? 'une cible'}.\`, 'action');
+          }
+          break;
+        case 'avocat_vereux':
+          if (junkieAction.avocateTargetId) {
+            updatedPlayers = updatedPlayers.map(p =>
+              p.id === junkieAction.avocateTargetId
+                ? { ...p, isProtected: true }
+                : p
+            );
+            addLog(\`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur \${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.\`, 'protection');
+          }
+          break;
+        case 'apprenti':
+          if (junkieAction.apprentiTargetId) {
+            updatedPlayers = updatedPlayers.map(p =>
+              p.id === junkie.id
+                ? { ...p, linkedVoteTargetId: junkieAction.apprentiTargetId }
+                : p
+            );
+            addLog('🎯 Le Junkie a appliqué le pouvoir de l’Apprenti.', 'action');
+          }
+          break;
+        case 'agent_sous_couverture': {
+          const target = junkieAction.agentTargetId
+            ? players.find(p => p.id === junkieAction.agentTargetId)
+            : undefined;
+          if (junkieAction.agentActionType === 'recruit' && target && junkieAction.recruitmentAccepted) {
+            if (target.roleId !== 'homme_de_main' && !target.isInformateur && target.currentTeam === 'Gang' && getInformantsCount(updatedPlayers) < 2) {
+              updatedPlayers = updatedPlayers.map(p =>
+                p.id === target.id ? { ...p, isInformateur: true, currentTeam: 'Forces de l\'ordre' } : p
+              );
+              addLog(\`👮 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : \${target.name} devient Informateur.\`, 'recruitment');
+            }
+          }
+          if (junkieAction.agentActionType === 'prison' && target) {
+            const valid = target.isAlive && !target.isPrisoner &&
+              target.roleId !== 'chauffeur' &&
+              target.roleId !== 'agent_sous_couverture' &&
+              !target.isInformateur &&
+              target.roleId !== 'homme_de_main';
+            const protectedByAvocate = updatedPlayers.find(p => p.id === target.id)?.isProtected;
+            if (valid && !protectedByAvocate) {
+              updatedPlayers = updatedPlayers.map(p =>
+                p.id === target.id ? { ...p, isPrisoner: true } : p
+              );
+              addLog(\`🚔 Le Junkie a appliqué le pouvoir de l’Agent sous couverture : \${target.name} est envoyé en prison.\`, 'prison');
+            }
+          }
+          break;
+        }
+        case 'trafiquant':
+        case 'blanchisseur':
+        case 'nettoyeur':
+        case 'pickpocket':
+        case 'hacker':
+        case 'revendeur_armes':
+        default:
+          break;
+      }
+    } else if (junkie && junkieAction && junkiePoisoned) {
+      addLog('⚠️ Le Junkie était empoisonné : son pouvoir simulé échoue silencieusement.', 'info');
+    }
+
     setPlayers(updatedPlayers);
     setLastNightKillPlayerId(prisonTargetId);
     setLastDayExecutedPlayerId(undefined);
