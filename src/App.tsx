@@ -611,10 +611,7 @@ export default function App() {
                   onUpdatePlayer={handleUpdatePlayer}
                   onBatchUpdatePlayers={handleBatchUpdatePlayers}
                   onFinishNight={handleFinishNight}
-                  bluffs={bluffs}
-                  drunkPerceivedRoleId={drunkPerceivedRoleId}
                   lastDayExecutedPlayerId={lastDayExecutedPlayerId}
-                  avocatPlaidoyerActive={avocatPlaidoyerActive}
                 />
               )}
 
@@ -625,11 +622,8 @@ export default function App() {
                   players={players}
                   onExecutePlayer={handleExecutePlayer}
                   onClearExecution={() => setLastDayExecutedPlayerId(undefined)}
-                  onTriggerVirgin={handleTriggerVirgin}
-                  onTriggerHunter={handleTriggerHunter}
                   onStartNight={handleStartNight}
-                  avocatPlaidoyerActive={avocatPlaidoyerActive}
-                  onToggleAvocatPlaidoyer={(active) => setAvocatPlaidoyerActive(active)}
+                  onTriggerTueurShot={handleTriggerTueurShot}
                 />
               )}
             </div>
