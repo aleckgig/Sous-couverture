@@ -35,6 +35,18 @@ interface NightAssistantProps {
     apprentiTargetId?: string;
     gardeTargetId?: string;
     avocateTargetId?: string;
+    junkieAction?: {
+      perceivedRoleId: RoleId;
+      chimisteTargetId?: string;
+      apprentiTargetId?: string;
+      avocateTargetId?: string;
+      hackerTargetOneId?: string;
+      hackerTargetTwoId?: string;
+      agentActionType?: 'none' | 'recruit' | 'prison';
+      agentTargetId?: string;
+      recruitmentAccepted?: boolean | null;
+      imprisonedPlayerId?: string;
+    };
   }) => void;
   lastDayExecutedPlayerId?: string;
   avocatPlaidoyerActive?: boolean;
@@ -60,8 +72,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [apprentiTargetId, setApprentiTargetId] = useState<string>('');
   const [gardeTargetId, setGardeTargetId] = useState<string>('');
   const [avocateTargetId, setAvocateTargetId] = useState<string>('');
-  
-  // Agent choices
+
+  // Junkie simulation choices
+  const [junkieChimisteTargetId, setJunkieChimisteTargetId] = useState<string>('');
+  const [junkieApprentiTargetId, setJunkieApprentiTargetId] = useState<string>('');
+  const [junkieAvocateTargetId, setJunkieAvocateTargetId] = useState<string>('');
+  const [junkieHackerTargetOneId, setJunkieHackerTargetOneId] = useState<string>('');
+  const [junkieHackerTargetTwoId, setJunkieHackerTargetTwoId] = useState<string>('');
+  const [junkieAgentActionType, setJunkieAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
+  const [junkieAgentActionChosen, setJunkieAgentActionChosen] = useState(false);
+  const [junkieAgentFlowStep, setJunkieAgentFlowStep] = useState(0);
+  const [junkieAgentTargetId, setJunkieAgentTargetId] = useState('');
+  const [junkieRecruitmentAccepted, setJunkieRecruitmentAccepted] = useState<boolean | null>(null);
+  const [junkieImprisonedPlayerId, setJunkieImprisonedPlayerId] = useState<string | undefined>(undefined);
+
   const [agentActionType, setAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
   const [agentActionChosen, setAgentActionChosen] = useState(false);
   const [agentFlowStep, setAgentFlowStep] = useState(0);
@@ -101,6 +125,17 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setImprisonedPlayerId(undefined);
     setHackerTargetOneId('');
     setHackerTargetTwoId('');
+    setJunkieChimisteTargetId('');
+    setJunkieApprentiTargetId('');
+    setJunkieAvocateTargetId('');
+    setJunkieHackerTargetOneId('');
+    setJunkieHackerTargetTwoId('');
+    setJunkieAgentActionType('none');
+    setJunkieAgentActionChosen(false);
+    setJunkieAgentFlowStep(0);
+    setJunkieAgentTargetId('');
+    setJunkieRecruitmentAccepted(null);
+    setJunkieImprisonedPlayerId(undefined);
     setRevendeurCardRoleId(null);
     setNoticeMessage(null);
     localStorage.removeItem('sc_night_step_index');
@@ -123,15 +158,35 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       apprentiTargetId: apprentiTargetId || undefined,
       gardeTargetId: gardeTargetId || undefined,
       avocateTargetId: avocateTargetId || undefined,
+      ...(junkiePerceivedRoleId ? {
+        junkieAction: {
+          perceivedRoleId: junkiePerceivedRoleId,
+          chimisteTargetId: junkieChimisteTargetId || undefined,
+          apprentiTargetId: junkieApprentiTargetId || undefined,
+          avocateTargetId: junkieAvocateTargetId || undefined,
+          hackerTargetOneId: junkieHackerTargetOneId || undefined,
+          hackerTargetTwoId: junkieHackerTargetTwoId || undefined,
+          agentActionType: junkieAgentActionType,
+          agentTargetId: junkieAgentTargetId || undefined,
+          recruitmentAccepted: junkieRecruitmentAccepted,
+          imprisonedPlayerId: junkieImprisonedPlayerId,
+        }
+      } : {}),
     });
   };
 
   const currentStep = steps[currentStepIndex];
   const isFirstNight = nightCount === 1;
+  const isJunkieStep = Boolean(currentStep?.isJunkieSimulation);
+  const junkiePerceivedRoleId = isJunkieStep ? currentStep?.roleId : undefined;
   const isLastStep = currentStepIndex >= steps.length - 1;
 
   const role = currentStep ? ROLES[currentStep.roleId] : undefined;
-  const actingPlayer = currentStep ? players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner) : undefined;
+  const actingPlayer = currentStep
+    ? currentStep.activePlayerIds?.length
+      ? players.find((p) => p.id === currentStep.activePlayerIds?.[0] && p.isAlive && !p.isPrisoner)
+      : players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner)
+    : undefined;
   const isImpairedByChimiste = Boolean(actingPlayer && chimisteTargetId && actingPlayer.id === chimisteTargetId);
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const activePerturbatorRoleIds = getActivePerturbatorRoleIds(players);
@@ -169,6 +224,100 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
   const handleNextStep = () => {
     if (!currentStep) return;
+
+    // Junkie simulation: the perceived role's power is executed normally,
+    // while information produced by the simulated role must be false.
+    if (isJunkieStep) {
+      if (currentStep.roleId === 'agent_sous_couverture') {
+        if (junkieAgentFlowStep === 0) {
+          if (!junkieAgentActionChosen) {
+            setValidationModal({
+              isOpen: true,
+              title: 'Action requise',
+              message: 'Veuillez choisir une action pour le Junkie.',
+            });
+            return;
+          }
+          if (junkieAgentActionType === 'none') {
+            if (isLastStep) handleFinish();
+            else setCurrentStepIndex((prev) => prev + 1);
+            return;
+          }
+          setJunkieAgentFlowStep(1);
+          return;
+        }
+        if (junkieAgentFlowStep === 1) {
+          if (!junkieAgentTargetId) {
+            setValidationModal({
+              isOpen: true,
+              title: 'Joueur requis',
+              message: junkieAgentActionType === 'recruit'
+                ? 'Veuillez sélectionner le joueur à recruter.'
+                : 'Veuillez sélectionner le joueur à envoyer en prison.',
+            });
+            return;
+          }
+          if (junkieAgentActionType === 'recruit') {
+            setJunkieAgentFlowStep(2);
+            return;
+          }
+          if (junkieAgentActionType === 'prison') {
+            const target = players.find((p) => p.id === junkieAgentTargetId);
+            if (target?.roleId === 'chauffeur' || target?.isInformateur || target?.roleId === 'agent_sous_couverture') {
+              setJunkieImprisonedPlayerId(undefined);
+              setNoticeMessage('Le Junkie croit avoir réussi son arrestation. L’effet sera traité selon les règles de son pouvoir.');
+            } else {
+              setJunkieImprisonedPlayerId(target?.id);
+            }
+            setJunkieAgentFlowStep(3);
+            return;
+          }
+        }
+        if (junkieAgentFlowStep === 2) {
+          if (junkieAgentTargetId && players.find(p => p.id === junkieAgentTargetId)?.roleId === 'homme_de_main') {
+            setJunkieRecruitmentAccepted(false);
+            setJunkieAgentFlowStep(3);
+            return;
+          }
+          if (junkieRecruitmentAccepted === null) {
+            setValidationModal({
+              isOpen: true,
+              title: 'Réponse requise',
+              message: 'Veuillez indiquer si le joueur accepte ou refuse le recrutement.',
+            });
+            return;
+          }
+          setJunkieAgentFlowStep(3);
+          return;
+        }
+        if (junkieAgentFlowStep === 3) {
+          if (isLastStep) handleFinish();
+          else setCurrentStepIndex((prev) => prev + 1);
+          return;
+        }
+      }
+
+      if (currentStep.roleId === 'chimiste' && !junkieChimisteTargetId) {
+        setValidationModal({ isOpen: true, title: 'Cible requise', message: 'Sélectionnez la cible du pouvoir du Junkie.' });
+        return;
+      }
+      if (currentStep.roleId === 'apprenti' && !junkieApprentiTargetId) {
+        setValidationModal({ isOpen: true, title: 'Cible requise', message: 'Sélectionnez la cible du pouvoir du Junkie.' });
+        return;
+      }
+      if (currentStep.roleId === 'avocat_vereux' && !junkieAvocateTargetId) {
+        setValidationModal({ isOpen: true, title: 'Cible requise', message: 'Sélectionnez la cible du pouvoir du Junkie.' });
+        return;
+      }
+      if (currentStep.roleId === 'hacker' && (!junkieHackerTargetOneId || !junkieHackerTargetTwoId)) {
+        setValidationModal({ isOpen: true, title: 'Sélection requise', message: 'Sélectionnez les 2 joueurs désignés par le Junkie.' });
+        return;
+      }
+
+      if (isLastStep) handleFinish();
+      else setCurrentStepIndex((prev) => prev + 1);
+      return;
+    }
 
     // Sub-flow for agent_sous_couverture
     if (currentStep.roleId === 'agent_sous_couverture') {
@@ -299,7 +448,9 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   };
 
   const actionLabel =
-    agentFlowStep === 0 ? 'Choisissez une action' :
+    isJunkieStep && currentStep?.roleId === 'agent_sous_couverture'
+      ? (junkieAgentFlowStep === 0 ? 'Choisissez une action' : junkieAgentFlowStep === 1 ? 'Choisissez une cible' : junkieAgentFlowStep === 2 ? 'Le joueur accepte-t-il ?' : 'Action terminée')
+      : agentFlowStep === 0 ? 'Choisissez une action' :
     agentFlowStep === 1 ? (agentActionType === 'recruit' ? 'Choisissez un joueur à recruter' : 'Choisissez un joueur à envoyer en prison') :
     agentFlowStep === 2 ? 'Le joueur accepte-t-il ?' :
     recruitmentAcceptedTonight === true ? 'Recrutement accepté' :
@@ -307,7 +458,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     agentActionType === 'prison' ? 'Arrestation' : 'Action terminée';
 
   const nextLabel =
-    currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2
+    isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 2
+      ? 'Confirmer'
+      : isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 3
+        ? (isLastStep ? 'Réveiller la ville' : 'Continuer')
+        : currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2
       ? 'Confirmer'
       : currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 3
         ? (isLastStep ? 'Réveiller la ville' : 'Continuer')
@@ -380,7 +535,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 pt-3 pb-2">
         <div className="max-w-md mx-auto space-y-3">
 
-          {currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (
             <>
               <p className="text-center text-base sm:text-lg font-medium text-stone-800 mb-3">
                 Que fait-il cette nuit ?
@@ -418,7 +573,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </>
           )}
 
-          {currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 1 && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 1 && (
             <>
               <p className="text-center text-base sm:text-lg font-medium text-stone-800">
                 {agentActionType === 'recruit' ? 'Choisissez un joueur à recruter comme informateur.' : 'Choisissez un joueur à envoyer en prison.'}
@@ -444,7 +599,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </>
           )}
 
-          {currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2 && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2 && (
             <>
               <p className="text-center text-base sm:text-lg font-medium text-stone-800">
                 {agentTarget?.name} accepte-t-il de devenir informateur ?
@@ -480,7 +635,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </>
           )}
 
-          {currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 3 && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 3 && (
             <div className="text-center pt-2">
               {recruitmentAcceptedTonight === true ? (
                 <>
@@ -530,6 +685,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               {currentStep.reminder && (
                 <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
               )}
+              {isJunkieStep && (
+                <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
+                  ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
+                </div>
+              )}
               {isImpairedByChimiste && currentStep.actionType === 'info_only' && (
                 <p className="text-center text-xs font-bold text-red-700 max-w-sm mx-auto">
                   Cette information est fausse : le Conteur doit transmettre une valeur incorrecte.
@@ -538,7 +698,115 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </>
           )}
 
-          {currentStep.roleId === 'chimiste' && (
+          {isJunkieStep && currentStep.roleId === 'chimiste' && (
+            <div className="mt-4">
+              <PlayerSelect
+                value={junkieChimisteTargetId}
+                onChange={setJunkieChimisteTargetId}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                excludePlayerId={actingPlayer?.id}
+                placeholder="Choisir un joueur…"
+                accent="purple"
+              />
+            </div>
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'apprenti' && (
+            <div className="mt-4">
+              <PlayerSelect
+                value={junkieApprentiTargetId}
+                onChange={setJunkieApprentiTargetId}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                excludePlayerId={actingPlayer?.id}
+                placeholder="Choisir un joueur…"
+                accent="blue"
+              />
+            </div>
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'avocat_vereux' && (
+            <div className="mt-4">
+              <PlayerSelect
+                value={junkieAvocateTargetId}
+                onChange={setJunkieAvocateTargetId}
+                players={players.filter((p) => p.isAlive && !p.isPrisoner)}
+                excludePlayerId={actingPlayer?.id}
+                placeholder="Choisir un joueur à protéger…"
+                accent="blue"
+              />
+            </div>
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'hacker' && (
+            <div className="mt-4 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <PlayerSelect value={junkieHackerTargetOneId} onChange={(id) => { setJunkieHackerTargetOneId(id); if (id === junkieHackerTargetTwoId) setJunkieHackerTargetTwoId(''); }} players={players.filter((p) => p.isAlive && !p.isPrisoner)} excludePlayerId={actingPlayer?.id} placeholder="1er joueur…" accent="purple" />
+                <PlayerSelect value={junkieHackerTargetTwoId} onChange={setJunkieHackerTargetTwoId} players={players.filter((p) => p.isAlive && !p.isPrisoner && p.id !== junkieHackerTargetOneId)} excludePlayerId={actingPlayer?.id} placeholder="2e joueur…" accent="purple" />
+              </div>
+            </div>
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 0 && (
+            <div className="space-y-2.5">
+              {[
+                ...(getInformantsCount(players) < 2 ? [{ id: 'recruit' as const, label: 'Recruter un informateur', icon: <UserCheck className="w-6 h-6" /> }] : []),
+                ...(!isFirstNight ? [{ id: 'prison' as const, label: 'Envoyer en prison', icon: <Shield className="w-6 h-6" /> }] : []),
+                { id: 'none' as const, label: 'Ne rien faire', icon: <Moon className="w-6 h-6" /> },
+              ].map((action) => (
+                <button key={action.id} type="button"
+                  onClick={() => {
+                    setJunkieAgentActionType(action.id);
+                    setJunkieAgentActionChosen(true);
+                    setJunkieAgentTargetId('');
+                    setJunkieRecruitmentAccepted(null);
+                  }}
+                  className={`w-full min-h-[58px] px-4 rounded-xl border flex items-center gap-4 text-left ${junkieAgentActionType === action.id && junkieAgentActionChosen ? 'border-purple-700 bg-purple-50' : 'border-stone-300 bg-[#faf8f2]'}`}>
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center bg-white border border-stone-200">{action.icon}</span>
+                  <span className="flex-1 font-bold text-sm">{action.label}</span>
+                  <ArrowRight className="w-4 h-4 text-stone-400" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 1 && (
+            <PlayerSelect
+              value={junkieAgentTargetId}
+              onChange={setJunkieAgentTargetId}
+              players={players.filter((p) =>
+                p.isAlive && !p.isPrisoner &&
+                (junkieAgentActionType === 'recruit'
+                  ? p.currentTeam === 'Gang' && !p.isInformateur && p.roleId !== 'agent_sous_couverture' && getInformantsCount(players) < 2
+                  : p.roleId !== 'agent_sous_couverture' && !p.isInformateur)
+              )}
+              placeholder="Choisir un joueur…"
+              accent={junkieAgentActionType === 'recruit' ? 'red' : 'default'}
+            />
+          )}
+
+          {isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 2 && (
+            <div className="space-y-2.5 mt-4">
+              <p className="text-center text-base font-medium">{players.find(p => p.id === junkieAgentTargetId)?.name} accepte-t-il ?</p>
+              <button type="button" onClick={() => setJunkieRecruitmentAccepted(true)} className={`w-full min-h-[62px] rounded-xl border border-emerald-300 bg-emerald-50 font-black ${junkieRecruitmentAccepted === true ? 'ring-2 ring-emerald-700' : ''}`}>✓ OUI, il accepte</button>
+              <button type="button" onClick={() => setJunkieRecruitmentAccepted(false)} className={`w-full min-h-[62px] rounded-xl border border-red-300 bg-red-50 font-black ${junkieRecruitmentAccepted === false ? 'ring-2 ring-red-700' : ''}`}>✕ NON, il refuse</button>
+            </div>
+          )}
+
+          {isJunkieStep && (currentStep.roleId === 'nettoyeur' || currentStep.roleId === 'revendeur_armes') && (
+            <button type="button" onClick={() => {
+              const executedRoleId = lastDayExecutedPlayerId
+                ? players.find(p => p.id === lastDayExecutedPlayerId)?.roleId
+                : undefined;
+              const falseRoleId = currentStep.roleId === 'nettoyeur'
+                ? (Object.values(ROLES).find(r => r.id !== executedRoleId && r.id !== 'junkie')?.id ?? 'caid')
+                : (Object.values(ROLES).find(r => r.isPerturbateur && !activePerturbatorRoleIds.includes(r.id))?.id ?? 'caid');
+              setCardModalRoleId(falseRoleId);
+            }} className="w-full py-3 rounded-lg bg-stone-900 text-white text-xs font-black">
+              <Eye className="inline w-4 h-4 mr-1" /> MONTRER UNE FAUSSE CARTE
+            </button>
+          )}
+
+          {!isJunkieStep && currentStep.roleId === 'chimiste' && (
             <div className="mt-4">
               <PlayerSelect
                 value={chimisteTargetId}
@@ -550,7 +818,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {currentStep.roleId === 'apprenti' && (
+          {!isJunkieStep && currentStep.roleId === 'apprenti' && (
             <div className="mt-4">
               <PlayerSelect
                 value={apprentiTargetId}
@@ -563,7 +831,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {currentStep.roleId === 'avocat_vereux' && (
+          {!isJunkieStep && currentStep.roleId === 'avocat_vereux' && (
             <div className="mt-4">
               <PlayerSelect
                 value={avocateTargetId}
@@ -576,7 +844,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {currentStep.roleId === 'hacker' && (
+          {!isJunkieStep && currentStep.roleId === 'hacker' && (
             <div className="mt-4 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <PlayerSelect value={hackerTargetOneId} onChange={(id) => { setHackerTargetOneId(id); if (id === hackerTargetTwoId) setHackerTargetTwoId(''); }} players={players.filter((p) => p.isAlive && !p.isPrisoner)} excludePlayerId={actingPlayer?.id} placeholder="1er joueur…" accent="purple" />
@@ -585,7 +853,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {currentStep.roleId === 'nettoyeur' && (
+          {!isJunkieStep && currentStep.roleId === 'nettoyeur' && (
             <div className="mt-4 rounded-xl border border-stone-200 bg-white p-3">
               {lastDayExecutedPlayerId ? (() => {
                 const execPlayer = players.find((p) => p.id === lastDayExecutedPlayerId);
@@ -601,7 +869,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {currentStep.roleId === 'revendeur_armes' && (
+          {!isJunkieStep && currentStep.roleId === 'revendeur_armes' && (
             <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-3 text-center">
               {revendeurCardRoleId ? (
                 <>
@@ -656,10 +924,10 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           </button>
 
           <div className="flex-1 text-center">
-            {currentStep.roleId === 'agent_sous_couverture' && agentFlowStep > 0 && (
+            {currentStep.roleId === 'agent_sous_couverture' && (isJunkieStep ? junkieAgentFlowStep : agentFlowStep) > 0 && (
               <button
                 type="button"
-                onClick={() => setAgentFlowStep((prev) => Math.max(0, prev - 1))}
+                onClick={() => isJunkieStep ? setJunkieAgentFlowStep((prev) => Math.max(0, prev - 1)) : setAgentFlowStep((prev) => Math.max(0, prev - 1))}
                 className="text-xs font-medium text-stone-500 underline"
               >
                 Retour
