@@ -31,6 +31,7 @@ interface DayAssistantProps {
   onClearExecution?: () => void;
   onStartNight: () => void;
   onUpdatePlayer?: (player: Player) => void;
+  onBatchUpdatePlayers?: (players: Player[]) => void;
   avocatPlaidoyerActive?: boolean;
   onToggleAvocatPlaidoyer?: (active: boolean) => void;
   onTriggerTueurShot?: (tueurPlayerId: string, targetPlayerId: string) => void;
@@ -44,6 +45,7 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   onClearExecution,
   onStartNight,
   onUpdatePlayer,
+  onBatchUpdatePlayers,
   avocatPlaidoyerActive,
   onToggleAvocatPlaidoyer,
   onTriggerTueurShot,
@@ -142,6 +144,8 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
 
   const tueurPlayer = players.find((p) => p.roleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
   const gardePlayer = players.find((p) => p.roleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
+  const junkieTueurPlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
+  const junkieGardePlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
 
   const handleConfirmExecution = (playerId: string) => {
     const p = players.find((pl) => pl.id === playerId);
@@ -326,6 +330,90 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
                   setGardeTargetId('');
                 }} className="w-full py-2 rounded-lg bg-blue-700 text-white font-black text-[10px] disabled:opacity-40">Protéger</button>
               </>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Pouvoirs de jour simulés du Junkie */}
+      {(junkieTueurPlayer || junkieGardePlayer) && (
+        <div className="shrink-0 rounded-2xl border border-purple-200 bg-purple-50 p-2.5 space-y-2">
+          <div className="text-[10px] uppercase tracking-widest font-black text-purple-800">
+            Pouvoirs du Junkie
+          </div>
+
+          {junkieTueurPlayer && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-2.5 space-y-2">
+              <div className="text-[11px] font-black text-stone-900">
+                {junkieTueurPlayer.name} — croit être Tueur à gages
+              </div>
+              {junkieTueurPlayer.hasUsedTueurAGages ? (
+                <div className="text-[10px] text-stone-500">Pouvoir utilisé.</div>
+              ) : (
+                <>
+                  <PlayerSelect
+                    value={tueurTargetId}
+                    onChange={setTueurTargetId}
+                    players={freeLivingPlayers.filter(p => p.id !== junkieTueurPlayer.id)}
+                    placeholder="Cible…"
+                    accent="red"
+                  />
+                  <button
+                    type="button"
+                    disabled={!tueurTargetId}
+                    onClick={() => {
+                      if (tueurTargetId) {
+                        onTriggerTueurShot?.(junkieTueurPlayer.id, tueurTargetId);
+                        setTueurTargetId('');
+                      }
+                    }}
+                    className="w-full py-2 rounded-lg bg-red-700 text-white font-black text-[10px] disabled:opacity-40"
+                  >
+                    Exécuter
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {junkieGardePlayer && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-2.5 space-y-2">
+              <div className="text-[11px] font-black text-stone-900">
+                {junkieGardePlayer.name} — croit être Garde du corps
+              </div>
+              {junkieGardePlayer.hasUsedGardeDuCorps ? (
+                <div className="text-[10px] text-stone-500">Pouvoir utilisé.</div>
+              ) : (
+                <>
+                  <PlayerSelect
+                    value={gardeTargetId}
+                    onChange={setGardeTargetId}
+                    players={freeLivingPlayers.filter(p => p.id !== junkieGardePlayer.id)}
+                    placeholder="Protéger…"
+                    accent="blue"
+                  />
+                  <button
+                    type="button"
+                    disabled={!gardeTargetId}
+                    onClick={() => {
+                      if (!gardeTargetId) return;
+                      const target = players.find(p => p.id === gardeTargetId);
+                      const updated = players.map(p => {
+                        if (p.id === junkieGardePlayer.id) return { ...p, hasUsedGardeDuCorps: true };
+                        if (target && p.id === target.id && !junkieGardePlayer.isPoisoned && !junkieGardePlayer.isInformationPoisoned) {
+                          return { ...p, isExecutionProtected: true };
+                        }
+                        return p;
+                      });
+                      onBatchUpdatePlayers?.(updated);
+                      setGardeTargetId('');
+                    }}
+                    className="w-full py-2 rounded-lg bg-blue-700 text-white font-black text-[10px] disabled:opacity-40"
+                  >
+                    Protéger
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

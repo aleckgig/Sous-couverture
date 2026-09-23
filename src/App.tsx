@@ -390,11 +390,12 @@ export default function App() {
       const protectedByJunkieAvocate = junkieAction?.perceivedRoleId === 'avocat_vereux' &&
         !junkiePoisoned &&
         junkieAction.avocateTargetId === prisonTargetId;
+      const targetIsChauffeur = prisonTarget.roleId === 'chauffeur' || prisonTarget.perceivedRoleId === 'chauffeur';
       const validTarget = prisonTarget &&
         prisonTarget.isAlive &&
         !prisonTarget.isPrisoner &&
         prisonTarget.roleId !== 'agent_sous_couverture' &&
-        prisonTarget.roleId !== 'chauffeur' &&
+        !targetIsChauffeur &&
         !prisonTarget.isInformateur;
 
       if (validTarget && !protectedByAvocate && !protectedByJunkieAvocate) {
@@ -429,7 +430,7 @@ export default function App() {
             ? players.find(p => p.id === junkieAction.agentTargetId)
             : undefined;
           if (junkieAction.agentActionType === 'recruit' && target && junkieAction.recruitmentAccepted) {
-            if (target.roleId !== 'homme_de_main' && !target.isInformateur && target.currentTeam === 'Gang' && getInformantsCount(updatedPlayers) < 2) {
+            if (target.roleId !== 'homme_de_main' && target.perceivedRoleId !== 'homme_de_main' && !target.isInformateur && target.currentTeam === 'Gang' && getInformantsCount(updatedPlayers) < 2) {
               updatedPlayers = updatedPlayers.map(p =>
                 p.id === target.id ? { ...p, isInformateur: true, currentTeam: 'Forces de l\'ordre' } : p
               );
@@ -437,11 +438,13 @@ export default function App() {
             }
           }
           if (junkieAction.agentActionType === 'prison' && target) {
+            const targetIsChauffeur = target.roleId === 'chauffeur' || target.perceivedRoleId === 'chauffeur';
             const valid = target.isAlive && !target.isPrisoner &&
-              target.roleId !== 'chauffeur' &&
+              !targetIsChauffeur &&
               target.roleId !== 'agent_sous_couverture' &&
               !target.isInformateur &&
-              target.roleId !== 'homme_de_main';
+              target.roleId !== 'homme_de_main' &&
+              target.perceivedRoleId !== 'homme_de_main';
             const protectedByAvocate = updatedPlayers.find(p => p.id === target.id)?.isProtected;
             if (valid && !protectedByAvocate) {
               updatedPlayers = updatedPlayers.map(p =>
@@ -732,6 +735,8 @@ export default function App() {
                   onExecutePlayer={handleExecutePlayer}
                   onClearExecution={() => setLastDayExecutedPlayerId(undefined)}
                   onStartNight={handleStartNight}
+                  onUpdatePlayer={handleUpdatePlayer}
+                  onBatchUpdatePlayers={handleBatchUpdatePlayers}
                   onTriggerTueurShot={handleTriggerTueurShot}
                 />
               )}

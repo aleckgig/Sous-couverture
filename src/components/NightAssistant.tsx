@@ -376,7 +376,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       }
 
       if (agentFlowStep === 2) {
-        if (agentTarget?.roleId === 'homme_de_main') {
+        if (agentTarget?.roleId === 'homme_de_main' || agentTarget?.perceivedRoleId === 'homme_de_main') {
           if (recruitmentAcceptedTonight !== false) {
             setRecruitmentAcceptedTonight(false);
             setNoticeMessage('L’Homme de main ne peut pas être recruté : le refus est obligatoire.');
@@ -610,7 +610,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                   onClick={() => {
                     setRecruitmentAcceptedTonight(true);
                     const targetPlayer = players.find((p) => p.id === agentTargetId);
-                    if (targetPlayer && !isImpairedByChimiste && targetPlayer.roleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
+                    if (targetPlayer && !isImpairedByChimiste && targetPlayer.roleId !== 'homme_de_main' && targetPlayer.perceivedRoleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
                       onUpdatePlayer({ ...targetPlayer, isInformateur: true, currentTeam: 'Forces de l\'ordre' });
                     }
                   }}
