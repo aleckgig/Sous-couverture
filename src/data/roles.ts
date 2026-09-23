@@ -34,7 +34,7 @@ export const ROLES: Record<RoleId, StructuredRole> = {
       firstNightOrder: 5, eachNightOrder: 5,
       firstNightInstruction: 'Le Chimiste choisit 1 joueur à empoisonner.',
       eachNightInstruction: 'Le Chimiste choisit 1 joueur à empoisonner.' }),
-  avocate: role('avocat_vereux', 'L\'Avocate', 'Gang',
+  avocat_vereux: role('avocat_vereux', 'L\'Avocate', 'Gang',
     'Chaque nuit, choisir 1 joueur. Cette personne ne peut pas être envoyée en prison cette nuit.',
     'protection', 'chaque_nuit', '1 joueur', 'Chaque nuit', false,
     { firstNightOrder: 10, eachNightOrder: 10,
