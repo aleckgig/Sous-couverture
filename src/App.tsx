@@ -430,7 +430,7 @@ export default function App() {
             ? players.find(p => p.id === junkieAction.agentTargetId)
             : undefined;
           if (junkieAction.agentActionType === 'recruit' && target && junkieAction.recruitmentAccepted) {
-            if (target.roleId !== 'homme_de_main' && !target.isInformateur && target.currentTeam === 'Gang' && getInformantsCount(updatedPlayers) < 2) {
+            if (target.roleId !== 'homme_de_main' && target.perceivedRoleId !== 'homme_de_main' && !target.isInformateur && target.currentTeam === 'Gang' && getInformantsCount(updatedPlayers) < 2) {
               updatedPlayers = updatedPlayers.map(p =>
                 p.id === target.id ? { ...p, isInformateur: true, currentTeam: 'Forces de l\'ordre' } : p
               );
