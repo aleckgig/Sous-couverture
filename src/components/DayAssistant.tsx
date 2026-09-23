@@ -144,6 +144,8 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
 
   const tueurPlayer = players.find((p) => p.roleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
   const gardePlayer = players.find((p) => p.roleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
+  const junkieTueurPlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
+  const junkieGardePlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
 
   const handleConfirmExecution = (playerId: string) => {
     const p = players.find((pl) => pl.id === playerId);
