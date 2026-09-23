@@ -1549,7 +1549,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 Configuration du Junkie
               </div>
               <p className="text-xs text-stone-400 mt-1">
-                Le Junkie recevra cette fausse carte et croira sincèrement être ce rôle. Il utilisera le pouvoir inscrit sur cette carte.
+                <strong className="text-stone-200">Rôle réel : Le Junkie.</strong> La carte ci-dessous est la fausse carte qu’il recevra et croira sincèrement être son rôle.
               </p>
             </div>
             <select
