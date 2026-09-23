@@ -138,16 +138,23 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   const prisoners = livingPlayers.filter((p) => p.isPrisoner);
   const imprisonedTonight = players.find((p) => p.id === lastNightImprisonedPlayerId);
 
-  const avocatPlayer = players.find((p) => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner);
   const tueurPlayer = players.find((p) => p.roleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
+  const gardePlayer = players.find((p) => p.roleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
 
   const handleConfirmExecution = (playerId: string) => {
     const p = players.find((pl) => pl.id === playerId);
     if (p) {
+      const success = onExecutePlayer(playerId);
+      if (success === false) {
+        setHasExecutedToday(false);
+        setExecutedPlayerName('');
+        setSelectedExecuteId('');
+        setNoExecutionConfirmed(false);
+        return;
+      }
       setExecutedPlayerName(p.name);
       setHasExecutedToday(true);
       setNoExecutionConfirmed(false);
-      onExecutePlayer(playerId);
       setSelectedExecuteId('');
     }
   };
@@ -355,96 +362,69 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
         )}
       </div>
 
-      {/* SPECIAL DAY ACTIONS (AVOCAT & TUEUR) */}
+      {/* ACTIONS SPÉCIALES DU JOUR */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Avocate véreuse Plaidoyer */}
-        {avocatPlayer && (
-          <div className="bg-stone-900 border border-amber-500/40 rounded-3xl p-4 space-y-3 shadow-lg">
-            <div className="flex items-center gap-2">
-              <Scale className="w-5 h-5 text-amber-400" />
-              <h3 className="font-bold text-sm text-white font-serif">
-                L'Avocate véreuse ({avocatPlayer.name})
-              </h3>
-            </div>
-            <p className="text-xs text-stone-300 leading-relaxed">
-              L'Avocate véreuse peut prononcer un plaidoyer public pour convaincre les Informateurs de revenir dans le Gang.
-            </p>
-            <button
-              type="button"
-              onClick={() => onToggleAvocatPlaidoyer?.(!avocatPlaidoyerActive)}
-              className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border transition-all cursor-pointer ${
-                avocatPlaidoyerActive
-                  ? 'bg-amber-500 text-stone-950 border-amber-400 shadow'
-                  : 'bg-stone-950 text-stone-300 border-stone-800 hover:border-stone-700'
-              }`}
-            >
-              <span>{avocatPlaidoyerActive ? '⚖️ Plaidoyer activé pour cette nuit' : 'Activer le Plaidoyer de l\'Avocate véreuse'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Tueur à gages */}
         {tueurPlayer && (
           <div className="bg-stone-900 border border-red-500/40 rounded-3xl p-4 space-y-3 shadow-lg">
             <div className="flex items-center gap-2">
               <Crosshair className="w-5 h-5 text-red-400" />
-              <h3 className="font-bold text-sm text-white font-serif">
-                Le Tueur à gages ({tueurPlayer.name})
-              </h3>
+              <h3 className="font-bold text-sm text-white font-serif">Le Tueur à gages — {tueurPlayer.name}</h3>
             </div>
-            <p className="text-xs text-stone-300 leading-relaxed">
-              Le Tueur peut abattre publiquement un joueur s'il pense avoir identifié l'Agent sous couverture.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsTueurSectionOpen(!isTueurSectionOpen)}
-              className="w-full py-2.5 px-3 rounded-xl bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-500/50 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <span>🎯 Tir du Tueur à gages</span>
-            </button>
-
-            {isTueurSectionOpen && (
-              <div className="pt-2 border-t border-stone-800 space-y-2 animate-in fade-in">
-                <span className="text-[11px] text-stone-300 block">Cible désignée par le Tueur :</span>
-                <select
-                  value={tueurTargetId}
-                  onChange={(e) => setTueurTargetId(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="">-- Sélectionner la cible du tir --</option>
-                  {livingPlayers
-                    .filter((p) => p.id !== tueurPlayer.id)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({ROLES[p.roleId]?.nom})
-                      </option>
-                    ))}
-                </select>
-                <div className="flex items-center gap-2">
-                  {tueurTargetId && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onTriggerTueurShot?.(tueurPlayer.id, tueurTargetId);
-                        setIsTueurSectionOpen(false);
-                      }}
-                      className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs rounded-xl transition-all cursor-pointer"
-                    >
-                      Confirmer le tir sur {players.find((p) => p.id === tueurTargetId)?.name}
-                    </button>
+            <p className="text-xs text-stone-300">Une fois par partie, il peut exécuter immédiatement un joueur libre, sans vote.</p>
+            {tueurPlayer.hasUsedTueurAGages ? (
+              <div className="text-xs text-stone-400 bg-stone-950 border border-stone-800 rounded-xl p-3">Pouvoir déjà utilisé.</div>
+            ) : (
+              <>
+                <select value={tueurTargetId} onChange={e => setTueurTargetId(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-3 text-sm text-white">
+                  <option value="">— Choisir une cible —</option>
+                  {freeLivingPlayers.filter(p => p.id !== tueurPlayer.id).map(p =>
+                    <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsTueurSectionOpen(false);
-                      setTueurTargetId('');
-                    }}
-                    className="py-2 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold rounded-xl cursor-pointer"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
+                </select>
+                <button type="button" disabled={!tueurTargetId}
+                  onClick={() => { if (tueurTargetId) { onTriggerTueurShot?.(tueurPlayer.id, tueurTargetId); setTueurTargetId(''); } }}
+                  className="w-full py-3 rounded-xl bg-red-700 text-white font-black text-xs disabled:opacity-40">
+                  Exécuter immédiatement
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {gardePlayer && (
+          <div className="bg-stone-900 border border-blue-500/40 rounded-3xl p-4 space-y-3 shadow-lg">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-blue-400" />
+              <h3 className="font-bold text-sm text-white font-serif">Le Garde du corps — {gardePlayer.name}</h3>
+            </div>
+            <p className="text-xs text-stone-300">Une fois par partie, il peut empêcher l’exécution d’un joueur. Le vote devra alors être refait sans cette cible.</p>
+            {gardePlayer.hasUsedGardeDuCorps ? (
+              <div className="text-xs text-stone-400 bg-stone-950 border border-stone-800 rounded-xl p-3">Pouvoir déjà utilisé.</div>
+            ) : (
+              <>
+                <select
+                  value={gardeTargetId}
+                  onChange={e => setGardeTargetId(e.target.value)}
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-3 text-sm text-white">
+                  <option value="">— Choisir un joueur à protéger —</option>
+                  {freeLivingPlayers.filter(p => p.id !== gardePlayer.id).map(p =>
+                    <option key={p.id} value={p.id}>{p.name} — {ROLES[p.roleId]?.nom}</option>
+                  )}
+                </select>
+                <button type="button" disabled={!gardeTargetId}
+                  onClick={() => {
+                    if (!gardeTargetId) return;
+                    const target = players.find(p => p.id === gardeTargetId);
+                    if (target) {
+                      onUpdatePlayer?.({ ...target, isExecutionProtected: true });
+                      onUpdatePlayer?.({ ...gardePlayer, hasUsedGardeDuCorps: true });
+                    }
+                    setGardeTargetId('');
+                  }}
+                  className="w-full py-3 rounded-xl bg-blue-700 text-white font-black text-xs disabled:opacity-40">
+                  Empêcher l’exécution de ce joueur
+                </button>
+              </>
             )}
           </div>
         )}
