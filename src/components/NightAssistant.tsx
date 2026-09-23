@@ -175,6 +175,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
   // Next / Previous helpers
   const handleNextStep = () => {
+    // Validation des choix obligatoires
+    if (currentStep.roleId === 'chimiste' && !chimisteTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible du Chimiste requise', message: 'Sélectionnez le joueur que le Chimiste empoisonne.' });
+      return;
+    }
+    if (currentStep.roleId === 'apprenti' && !apprentiTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible de l’Apprenti requise', message: 'Sélectionnez le joueur que l’Apprenti doit suivre demain.' });
+      return;
+    }
+    if (currentStep.roleId === 'avocat_vereux' && !avocateTargetId) {
+      setValidationModal({ isOpen: true, title: 'Cible de l’Avocate requise', message: 'Sélectionnez le joueur à protéger contre la prison.' });
+      return;
+    }
+
     // Validation: Agent sous couverture
     if (currentStep.roleId === 'agent_sous_couverture') {
       if (agentActionType === 'recruit' && recruitmentAcceptedTonight === null) {
