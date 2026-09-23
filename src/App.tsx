@@ -304,15 +304,6 @@ export default function App() {
       );
     }
 
-    if (summary?.apprentiTargetId) {
-      const apprenti = players.find(p => p.roleId === 'apprenti' && p.isAlive && !p.isPrisoner);
-      if (apprenti && !apprenti.isInformationPoisoned && !apprenti.isPoisoned) {
-        updatedPlayers = updatedPlayers.map(p =>
-          p.id === apprenti.id ? { ...p, linkedVoteTargetId: summary.apprentiTargetId } : p
-        );
-      }
-    }
-
     // Resolve the Junkie's simulated role early enough for its real effects to
     // influence later night actions (e.g. a simulated Chimiste can poison the Agent,
     // and a simulated Avocate can protect someone from the Agent's arrest).
@@ -340,6 +331,15 @@ export default function App() {
             : p
         );
         addLog(`🛡️ Le Junkie a appliqué le pouvoir de l’Avocate sur ${players.find(p => p.id === junkieAction.avocateTargetId)?.name ?? 'une cible'}.`, 'protection');
+      }
+    }
+
+    if (summary?.apprentiTargetId) {
+      const apprenti = players.find(p => p.roleId === 'apprenti' && p.isAlive && !p.isPrisoner);
+      if (apprenti && !apprenti.isInformationPoisoned && !apprenti.isPoisoned) {
+        updatedPlayers = updatedPlayers.map(p =>
+          p.id === apprenti.id ? { ...p, linkedVoteTargetId: summary.apprentiTargetId } : p
+        );
       }
     }
 
