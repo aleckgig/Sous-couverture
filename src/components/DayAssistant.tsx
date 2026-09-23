@@ -31,6 +31,7 @@ interface DayAssistantProps {
   onClearExecution?: () => void;
   onStartNight: () => void;
   onUpdatePlayer?: (player: Player) => void;
+  onBatchUpdatePlayers?: (players: Player[]) => void;
   avocatPlaidoyerActive?: boolean;
   onToggleAvocatPlaidoyer?: (active: boolean) => void;
   onTriggerTueurShot?: (tueurPlayerId: string, targetPlayerId: string) => void;
@@ -44,6 +45,7 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   onClearExecution,
   onStartNight,
   onUpdatePlayer,
+  onBatchUpdatePlayers,
   avocatPlaidoyerActive,
   onToggleAvocatPlaidoyer,
   onTriggerTueurShot,
@@ -394,10 +396,14 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
                     onClick={() => {
                       if (!gardeTargetId) return;
                       const target = players.find(p => p.id === gardeTargetId);
-                      if (target && !junkieGardePlayer.isPoisoned && !junkieGardePlayer.isInformationPoisoned) {
-                        onUpdatePlayer?.({ ...target, isExecutionProtected: true });
-                      }
-                      onUpdatePlayer?.({ ...junkieGardePlayer, hasUsedGardeDuCorps: true });
+                      const updated = players.map(p => {
+                        if (p.id === junkieGardePlayer.id) return { ...p, hasUsedGardeDuCorps: true };
+                        if (target && p.id === target.id && !junkieGardePlayer.isPoisoned && !junkieGardePlayer.isInformationPoisoned) {
+                          return { ...p, isExecutionProtected: true };
+                        }
+                        return p;
+                      });
+                      onBatchUpdatePlayers?.(updated);
                       setGardeTargetId('');
                     }}
                     className="w-full py-2 rounded-lg bg-blue-700 text-white font-black text-[10px] disabled:opacity-40"
