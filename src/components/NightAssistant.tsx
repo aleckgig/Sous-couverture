@@ -10,19 +10,15 @@ import {
   Eye,
   Check,
   X,
-  UserRound,
 } from 'lucide-react';
 import { NightStep, Player, RoleId, StructuredRole } from '../types';
 import { ROLES } from '../data/roles';
 import {
   getPickpocketForcesDeLOrdreCount,
   getInformantsCount,
-  getPerturbateursCount,
+  getActivePerturbatorRoleIds,
 } from '../utils/gameLogic';
-import {
-} from '../utils/rulesConfig';
 import { RoleCardModal } from './RoleCardModal';
-import { DEFAULT_ROLE_IMAGE_MAP } from '../data/roleImageMap';
 import { PlayerSelect } from './PlayerSelect';
 import { ValidationAlertModal } from './ValidationAlertModal';
 
@@ -77,8 +73,9 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [hackerTargetOneId, setHackerTargetOneId] = useState<string>('');
   const [hackerTargetTwoId, setHackerTargetTwoId] = useState<string>('');
 
-  // Nettoyeur / Role card inspect modal
+  // Role-card reveals (Agent, Nettoyeuse, Revendeur d'armes)
   const [cardModalRoleId, setCardModalRoleId] = useState<string | null>(null);
+  const [revendeurCardRoleId, setRevendeurCardRoleId] = useState<RoleId | null>(null);
 
   // Notice & Validation dialog
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
@@ -104,6 +101,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setImprisonedPlayerId(undefined);
     setHackerTargetOneId('');
     setHackerTargetTwoId('');
+    setRevendeurCardRoleId(null);
     setNoticeMessage(null);
     localStorage.removeItem('sc_night_step_index');
   }, [nightCount]);
@@ -135,8 +133,8 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const role = currentStep ? ROLES[currentStep.roleId] : undefined;
   const actingPlayer = currentStep ? players.find((p) => p.roleId === currentStep.roleId && p.isAlive && !p.isPrisoner) : undefined;
   const isImpairedByChimiste = Boolean(actingPlayer && chimisteTargetId && actingPlayer.id === chimisteTargetId);
-  const roleImage = currentStep ? DEFAULT_ROLE_IMAGE_MAP[currentStep.roleId] : undefined;
   const agentTarget = players.find((p) => p.id === agentTargetId);
+  const activePerturbatorRoleIds = getActivePerturbatorRoleIds(players);
   const roleAccent =
     role?.camp_initial === "Forces de l'ordre"
       ? { bg: 'bg-blue-50', line: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', button: 'bg-blue-700', strokePosition: '0%' }
@@ -150,6 +148,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     backgroundPosition: `center ${roleAccent.strokePosition}`,
     backgroundRepeat: 'no-repeat',
   } as React.CSSProperties;
+
+  useEffect(() => {
+    if (currentStep?.roleId !== 'revendeur_armes' || revendeurCardRoleId) return;
+    const available = getActivePerturbatorRoleIds(players);
+    if (available.length > 0) {
+      setRevendeurCardRoleId(available[0]);
+    }
+  }, [currentStep?.roleId, players, revendeurCardRoleId]);
 
   const handlePrevStep = () => {
     if (currentStep?.roleId === 'agent_sous_couverture' && agentFlowStep > 0) {
@@ -221,6 +227,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       }
 
       if (agentFlowStep === 2) {
+        if (agentTarget?.roleId === 'homme_de_main') {
+          if (recruitmentAcceptedTonight !== false) {
+            setRecruitmentAcceptedTonight(false);
+            setNoticeMessage('L’Homme de main ne peut pas être recruté : le refus est obligatoire.');
+          }
+          setAgentFlowStep(3);
+          return;
+        }
         if (recruitmentAcceptedTonight === null) {
           setValidationModal({
             isOpen: true,
@@ -317,22 +331,6 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     </div>
   );
 
-  const RoleArt = () => (
-    <div className="h-[104px] flex items-center justify-center">
-      {roleImage ? (
-        <img
-          src={`/images/${roleImage}`}
-          alt=""
-          className="h-full max-w-[150px] object-contain drop-shadow-sm"
-        />
-      ) : (
-        <div className={`w-24 h-24 rounded-full ${roleAccent.bg} flex items-center justify-center`}>
-          <UserRound className={`w-12 h-12 ${roleAccent.text}`} />
-        </div>
-      )}
-    </div>
-  );
-
   const goNext = () => handleNextStep();
 
   if (!currentStep || steps.length === 0) {
@@ -359,7 +357,6 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
       {/* Role identity */}
       <div className="shrink-0 text-center">
-        <RoleArt />
         <div className="relative mx-auto w-fit max-w-[92%] px-3 py-1">
           <span
             aria-hidden="true"
@@ -390,7 +387,9 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               </p>
               <div className="space-y-2.5">
                 {[
-                  { id: 'recruit' as const, label: 'Recruter un informateur', icon: <UserCheck className="w-6 h-6" />, accent: 'red' },
+                  ...(getInformantsCount(players) < 2
+                    ? [{ id: 'recruit' as const, label: 'Recruter un informateur', icon: <UserCheck className="w-6 h-6" />, accent: 'red' }]
+                    : []),
                   ...(!isFirstNight ? [{ id: 'prison' as const, label: 'Envoyer en prison', icon: <Shield className="w-6 h-6" />, accent: 'stone' }] : []),
                   { id: 'none' as const, label: 'Ne rien faire', icon: <Moon className="w-6 h-6" />, accent: 'stone' },
                 ].map((action) => {
@@ -514,7 +513,9 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                     Arrestation enregistrée
                   </div>
                   <p className="text-base font-medium text-stone-800 mt-3">
-                    {agentTarget?.name} sera envoyé en prison cette nuit.
+                    {imprisonedPlayerId
+                      ? `${agentTarget?.name} sera envoyé en prison cette nuit.`
+                      : `${agentTarget?.name} ne sera finalement pas envoyé en prison.`}
                   </p>
                 </>
               ) : null}
@@ -528,6 +529,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               </p>
               {currentStep.reminder && (
                 <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
+              )}
+              {isImpairedByChimiste && currentStep.actionType === 'info_only' && (
+                <p className="text-center text-xs font-bold text-red-700 max-w-sm mx-auto">
+                  Cette information est fausse : le Conteur doit transmettre une valeur incorrecte.
+                </p>
               )}
             </>
           )}
@@ -592,6 +598,35 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                   </div>
                 );
               })() : <p className="text-xs text-stone-500 italic">Aucune exécution hier.</p>}
+            </div>
+          )}
+
+          {currentStep.roleId === 'revendeur_armes' && (
+            <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-3 text-center">
+              {revendeurCardRoleId ? (
+                <>
+                  <p className="text-sm font-black text-stone-900">
+                    Montrez au Revendeur d’armes une carte Perturbateur actuellement en jeu.
+                  </p>
+                  <p className="mt-1 text-xs text-stone-500">
+                    Carte sélectionnée : <span className="font-black text-stone-800">{ROLES[revendeurCardRoleId]?.nom}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setCardModalRoleId(revendeurCardRoleId)}
+                    className="mt-3 w-full rounded-lg bg-stone-900 py-3 text-white text-xs font-black"
+                  >
+                    MONTRER LA CARTE
+                  </button>
+                  {activePerturbatorRoleIds.length > 1 && (
+                    <div className="mt-2 text-[10px] text-stone-500">
+                      Une carte Perturbateur réelle actuellement en jeu est sélectionnée automatiquement.
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-red-700 font-bold">Aucun Perturbateur actif disponible.</p>
+              )}
             </div>
           )}
 
