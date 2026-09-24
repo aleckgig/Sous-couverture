@@ -772,7 +772,9 @@ export const PhonePlayerView: React.FC<PhonePlayerViewProps> = ({ initialRoomCod
                     {roleInfo?.name || 'Rôle Inconnu'}
                   </h2>
                   <p className="text-xs text-stone-300 leading-relaxed">
-                    {roleInfo?.description}
+                    {gameData.player.isInformateur
+                      ? 'Vous avez accepté le recrutement. Le pouvoir de votre rôle est désormais désactivé. Vous restez toutefois pleinement actif dans la partie.'
+                      : roleInfo?.description}
                   </p>
                 </div>
               )}
