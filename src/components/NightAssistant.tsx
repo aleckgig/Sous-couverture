@@ -209,8 +209,8 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       const trueValue = match ? Number(match[1]) : null;
       if (trueValue !== null) {
         return {
-          normal: String(trueValue),
-          toSay: String(trueValue === 0 ? 1 : 0),
+          normal: trueValue === 0 ? 'aucun' : String(trueValue),
+          toSay: trueValue === 0 ? '1' : 'aucun',
         };
       }
     }
@@ -728,13 +728,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           {currentStep.roleId !== 'agent_sous_couverture' && (
             <>
               {poisonedInfo ? (
-                <div className="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center space-y-2">
+                <div className="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center space-y-1.5">
                   <p className="text-xs font-black uppercase tracking-wide text-red-800">⚠️ Joueur empoisonné</p>
-                  <p className="text-sm text-red-900">
-                    <span className="font-black">Information normale — NE PAS DIRE :</span> {poisonedInfo.normal}
-                  </p>
                   <p className="text-base font-black text-red-950">
-                    <span className="font-black">Information à dire :</span> {poisonedInfo.toSay}
+                    Donc dire : <span className="text-lg">{poisonedInfo.toSay}</span>{' '}
+                    <span className="text-xs font-medium italic text-red-700">(au lieu de {poisonedInfo.normal})</span>
                   </p>
                 </div>
               ) : (
