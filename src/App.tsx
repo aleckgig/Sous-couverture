@@ -15,6 +15,7 @@ import { ImageManagerModal } from './components/ImageManagerModal';
 import { RulesValidationModal } from './components/RulesValidationModal';
 import { generateNightSteps, checkVictory, generateBalancedSousCouvertureRoles, getInformantsCount } from './utils/gameLogic';
 import { ROLES } from './data/roles';
+import { getAllLocalRoleImages } from './utils/cardStorage';
 import { Sparkles, RefreshCw, Trophy, Eye, RotateCcw } from 'lucide-react';
 
 const GAME_STORAGE_KEY = 'botc_clocktower_game_v1';
@@ -96,6 +97,49 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [gamePhase]);
+
+  // Background auto-sync: Ensure any role illustrations saved locally in the browser
+  // are persisted to the server filesystem so they remain permanently in memory across sessions
+  useEffect(() => {
+    let isCancelled = false;
+    const syncLocalImages = async () => {
+      try {
+        const locals = await getAllLocalRoleImages();
+        if (!locals || locals.length === 0 || isCancelled) return;
+
+        const res = await fetch('/api/images/status');
+        const data = await res.json();
+        const rolesStatus = data?.rolesStatus || {};
+
+        for (const item of locals) {
+          if (isCancelled) break;
+          const status = rolesStatus[item.roleId];
+          // If not assigned on server, or if we have high-res local dataUrl, upload to server
+          if (!status?.assigned && item.dataUrl && item.dataUrl.startsWith('data:image/')) {
+            try {
+              await fetch('/api/images/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  roleId: item.roleId,
+                  filename: `${item.roleId}.png`,
+                  dataUrl: item.dataUrl,
+                }),
+              });
+            } catch {
+              // ignore
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    syncLocalImages();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   // Auto-save on state change
   useEffect(() => {

@@ -11,12 +11,14 @@ import {
   Check,
   Eye,
   FolderOpen,
+  Save,
+  HardDrive,
 } from 'lucide-react';
 import { ALL_ROLES_LIST, ROLES } from '../data/roles';
 import { StructuredRole, RoleId } from '../types';
 import { getRoleCardImageUrl, getAllUploadedImages, ImageAsset } from '../utils/roleCardImages';
 import { DEFAULT_ROLE_IMAGE_MAP } from '../data/roleImageMap';
-import { getLocalRoleImage, saveLocalRoleImage, getLookupKeys } from '../utils/cardStorage';
+import { getLocalRoleImage, saveLocalRoleImage, getLookupKeys, getAllLocalRoleImages } from '../utils/cardStorage';
 import { RoleCardModal } from './RoleCardModal';
 
 interface ImageManagerModalProps {
@@ -32,10 +34,13 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
 }) => {
   const [roleImages, setRoleImages] = useState<Record<string, string | null>>({});
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; name: string } | null>(null);
   const [uploadSuccessMessage, setUploadSuccessMessage] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedRoleForModal, setSelectedRoleForModal] = useState<string | null>(null);
   const [singleUploadTargetRoleId, setSingleUploadTargetRoleId] = useState<string | null>(null);
+  const [serverAssignedCount, setServerAssignedCount] = useState<number>(0);
+  const [isServerComplete, setIsServerComplete] = useState<boolean>(false);
 
   const multipleFileInputRef = useRef<HTMLInputElement>(null);
   const singleFileInputRef = useRef<HTMLInputElement>(null);
@@ -57,65 +62,114 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
     setRoleImages(map);
   };
 
+  const fetchServerStatus = async () => {
+    try {
+      const res = await fetch('/api/images/status');
+      const data = await res.json();
+      if (data?.success) {
+        setServerAssignedCount(data.assignedCount || 0);
+        setIsServerComplete(Boolean(data.isComplete));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  // Sync locally stored role images to the server filesystem to keep them in permanent memory
+  const syncAllLocalImagesToServer = async (isManual = false) => {
+    try {
+      const locals = await getAllLocalRoleImages();
+      if (!locals || locals.length === 0) {
+        if (isManual) {
+          setUploadSuccessMessage('Toutes les illustrations sont déjà synchronisées.');
+        }
+        return;
+      }
+
+      setIsUploading(true);
+      setUploadProgress({ current: 0, total: locals.length, name: 'Sauvegarde sur le serveur...' });
+      let synced = 0;
+
+      for (let i = 0; i < locals.length; i++) {
+        const item = locals[i];
+        setUploadProgress({ current: i + 1, total: locals.length, name: item.roleId });
+        try {
+          const res = await fetch('/api/images/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              roleId: item.roleId,
+              filename: `${item.roleId}.png`,
+              dataUrl: item.dataUrl,
+            }),
+          });
+          if (res.ok) {
+            synced++;
+          }
+        } catch {}
+      }
+
+      await fetchServerStatus();
+      await loadAllImages();
+      setIsUploading(false);
+      setUploadProgress(null);
+
+      if (synced > 0 || isManual) {
+        setUploadSuccessMessage(
+          `Mémoire serveur actualisée : ${synced} illustration(s) sauvegardée(s) et gardée(s) en mémoire !`
+        );
+        onImagesUpdated?.();
+      }
+    } catch {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       loadAllImages();
+      fetchServerStatus();
+      // Auto-sync any local browser images to server when opening modal
+      syncAllLocalImagesToServer(false);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Multi-file upload handler
+  // Multi-file upload handler: Uploads file-by-file sequentially to prevent payload size limits
   const handleMultipleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     setUploadSuccessMessage('');
+    setUploadProgress({ current: 0, total: files.length, name: 'Démarrage...' });
 
-    const filesPayload: Array<{ filename: string; dataUrl: string }> = [];
+    let serverSuccessCount = 0;
+    let matchedCount = 0;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      setUploadProgress({ current: i + 1, total: files.length, name: file.name });
+
       const dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (ev) => resolve((ev.target?.result as string) || '');
         reader.readAsDataURL(file);
       });
 
-      if (dataUrl) {
-        filesPayload.push({
-          filename: file.name,
-          dataUrl,
-        });
-      }
-    }
+      if (!dataUrl) continue;
 
-    // 1. Send to server backend to write into public/images/
-    try {
-      await fetch('/api/images/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: filesPayload }),
-      });
-    } catch (err) {
-      console.warn('Server upload failed, relying on local IndexedDB storage', err);
-    }
-
-    // 2. Normalize and automatically associate each image to roles in IndexedDB & LocalStorage
-    let matchedCount = 0;
-    for (const item of filesPayload) {
-      const normFileName = item.filename
+      // Find matching role
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+      const normFileName = nameWithoutExt
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
 
-      // Store by filename as direct cache
-      try {
-        localStorage.setItem(`card_img_${normFileName}`, item.dataUrl);
-      } catch {}
-
+      let matchedRoleId: string | null = null;
       for (const role of ALL_ROLES_LIST) {
         if (role.id === 'trafiquant' && (normFileName.includes('arme') || normFileName.includes('revendeur'))) {
           continue;
@@ -142,21 +196,44 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
           return (
             normFileName === normCand ||
             normFileName.includes(normCand) ||
-            normCand.includes(normFileName)
+            (normCand.length >= 4 && normCand.includes(normFileName))
           );
         });
 
         if (isMatch) {
-          await saveLocalRoleImage(role.id, item.dataUrl);
+          matchedRoleId = role.id;
+          await saveLocalRoleImage(role.id, dataUrl);
           matchedCount++;
+          break;
         }
+      }
+
+      // Send single file to server to stay well below HTTP body size limits
+      try {
+        const res = await fetch('/api/images/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roleId: matchedRoleId || undefined,
+            filename: file.name,
+            dataUrl,
+          }),
+        });
+        if (res.ok) {
+          serverSuccessCount++;
+        }
+      } catch (err) {
+        console.warn('Server upload failed for file', file.name, err);
       }
     }
 
+    await fetchServerStatus();
+    await handleAutoAssociateAll();
     await loadAllImages();
     setIsUploading(false);
+    setUploadProgress(null);
     setUploadSuccessMessage(
-      `${filesPayload.length} image(s) importée(s) ! ${matchedCount} association(s) effectuée(s) avec succès.`
+      `${files.length} image(s) importée(s) (${serverSuccessCount} sur le serveur) ! ${matchedCount} association(s) effectuée(s) et gardée(s) en mémoire.`
     );
     onImagesUpdated?.();
     e.target.value = '';
@@ -364,11 +441,16 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
               <h2 className="font-serif font-black text-lg sm:text-xl text-white">
                 Gestionnaire des Illustrations & Cartes
               </h2>
-              <p className="text-xs text-stone-400">
-                {totalAssigned} / {ALL_ROLES_LIST.length} rôles illustrés{' '}
+              <p className="text-xs text-stone-400 flex items-center gap-2 mt-0.5">
+                <span>{totalAssigned} / {ALL_ROLES_LIST.length} rôles illustrés</span>
+                <span className="text-stone-600">•</span>
+                <span className={`inline-flex items-center gap-1 font-bold ${isServerComplete || serverAssignedCount >= 17 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <HardDrive className="w-3 h-3" />
+                  {serverAssignedCount} / {ALL_ROLES_LIST.length} en mémoire serveur
+                </span>
                 {missingCount > 0 && (
                   <span className="text-amber-400 font-bold ml-1">
-                    ({missingCount} illustration(s) manquante(s))
+                    ({missingCount} manquante(s))
                   </span>
                 )}
               </p>
@@ -376,6 +458,19 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Garder en mémoire sur le serveur Button */}
+            <button
+              type="button"
+              onClick={() => syncAllLocalImagesToServer(true)}
+              id="btn-persist-images-server"
+              disabled={isUploading}
+              className="px-3 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Sauvegarder définitivement toutes les illustrations sur le serveur pour ne jamais les perdre"
+            >
+              <Save className={`w-3.5 h-3.5 ${isUploading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Garder en mémoire</span>
+            </button>
+
             {/* Auto-Associate Button */}
             <button
               type="button"
@@ -412,6 +507,18 @@ export const ImageManagerModal: React.FC<ImageManagerModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Upload Progress Alert */}
+        {uploadProgress && (
+          <div className="mx-4 sm:mx-6 mt-3 p-3 bg-amber-950/80 border border-amber-500 rounded-2xl flex items-center justify-between gap-2 text-amber-200 text-xs shadow-lg animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+              <span className="font-semibold">
+                Importation en cours ({uploadProgress.current}/{uploadProgress.total}) : {uploadProgress.name}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Upload Success Alert */}
         {uploadSuccessMessage && (

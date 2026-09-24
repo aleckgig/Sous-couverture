@@ -57,6 +57,9 @@ async function startServer() {
     }
   }
 
+  // Statically serve images directly from public/images
+  app.use('/images', express.static(publicImagesDir));
+
   // API Routes
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', roomsCount: rooms.size });
@@ -95,9 +98,7 @@ async function startServer() {
   app.get('/api/images/list', (req, res) => {
     try {
       const publicFiles = fs.existsSync(publicImagesDir) ? fs.readdirSync(publicImagesDir) : [];
-      const assetsDir = path.join(process.cwd(), 'src', 'assets', 'images');
-      const assetFiles = fs.existsSync(assetsDir) ? fs.readdirSync(assetsDir) : [];
-      const allFiles = Array.from(new Set([...publicFiles, ...assetFiles])).filter(
+      const allFiles = publicFiles.filter(
         (f) => !f.startsWith('.') && /\.(png|jpe?g|webp)$/i.test(f)
       );
       res.json({ success: true, images: allFiles });
@@ -106,28 +107,203 @@ async function startServer() {
     }
   });
 
+  const CANONICAL_ROLE_FILES: Record<string, string> = {
+    agent_sous_couverture: 'Agent sous couverture.png',
+    hacker: 'Hacker.png',
+    blanchisseur: 'Blanchisseur.png',
+    trafiquant: 'Trafiquant.png',
+    nettoyeur: 'Nettoyeuse.png',
+    nettoyeuse: 'Nettoyeuse.png',
+    pickpocket: 'Pickpocket.png',
+    tueur_a_gages: 'Tueur a gages.png',
+    apprenti: 'Apprenti.png',
+    garde_du_corps: 'Garde du corps.png',
+    chauffeur: 'Chauffeur.png',
+    caid: 'Caid.png',
+    chimiste: 'Chimiste.png',
+    junkie: 'Junkie.png',
+    arnaqueuse: 'Arnaqueuse.png',
+    avocat_vereux: 'Avocate.png',
+    avocate: 'Avocate.png',
+    revendeur_armes: 'Revendeur d armes.png',
+    homme_de_main: 'Homme de main.png',
+  };
+
+  // Status of role images stored on the server
+  app.get('/api/images/status', (req, res) => {
+    try {
+      const publicFiles = fs.existsSync(publicImagesDir) ? fs.readdirSync(publicImagesDir) : [];
+      const rolesStatus: Record<string, { assigned: boolean; filename?: string; url?: string }> = {};
+      const uniqueRoles = [
+        'agent_sous_couverture',
+        'chimiste',
+        'avocat_vereux',
+        'apprenti',
+        'garde_du_corps',
+        'chauffeur',
+        'hacker',
+        'blanchisseur',
+        'nettoyeur',
+        'pickpocket',
+        'trafiquant',
+        'revendeur_armes',
+        'tueur_a_gages',
+        'caid',
+        'junkie',
+        'arnaqueuse',
+        'homme_de_main',
+      ];
+      let assignedCount = 0;
+      for (const rId of uniqueRoles) {
+        const canonFile = CANONICAL_ROLE_FILES[rId];
+        const exists = canonFile ? publicFiles.includes(canonFile) : false;
+        rolesStatus[rId] = {
+          assigned: exists,
+          filename: exists ? canonFile : undefined,
+          url: exists ? `/images/${canonFile}` : undefined,
+        };
+        if (exists) assignedCount++;
+      }
+      res.json({
+        success: true,
+        totalRoles: uniqueRoles.length,
+        assignedCount,
+        isComplete: assignedCount >= uniqueRoles.length,
+        publicFiles,
+        rolesStatus,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  function detectRoleForFilename(rawName: string): string | null {
+    const norm = rawName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+
+    if (norm === 'agentsouscouverture' || norm === 'agent' || norm.includes('couverture') || norm.includes('agent')) {
+      return 'agent_sous_couverture';
+    }
+    if (norm.includes('revendeur') || (norm.includes('arme') && !norm.includes('homme'))) {
+      return 'revendeur_armes';
+    }
+    if (norm.includes('trafiquant')) {
+      return 'trafiquant';
+    }
+    if (norm.includes('hacker')) {
+      return 'hacker';
+    }
+    if (norm.includes('blanchiss')) {
+      return 'blanchisseur';
+    }
+    if (norm.includes('nettoy')) {
+      return 'nettoyeur';
+    }
+    if (norm.includes('pickpocket')) {
+      return 'pickpocket';
+    }
+    if (norm.includes('tueur') || norm.includes('gage')) {
+      return 'tueur_a_gages';
+    }
+    if (norm.includes('apprenti')) {
+      return 'apprenti';
+    }
+    if (norm.includes('garde') || norm.includes('corps')) {
+      return 'garde_du_corps';
+    }
+    if (norm.includes('chauffeur')) {
+      return 'chauffeur';
+    }
+    if (norm.includes('caid')) {
+      return 'caid';
+    }
+    if (norm.includes('chimiste')) {
+      return 'chimiste';
+    }
+    if (norm.includes('junkie')) {
+      return 'junkie';
+    }
+    if (norm.includes('arnaqu')) {
+      return 'arnaqueuse';
+    }
+    if (norm.includes('avocat')) {
+      return 'avocat_vereux';
+    }
+    if (norm.includes('homme') || norm.includes('main')) {
+      return 'homme_de_main';
+    }
+    return null;
+  }
+
   // Images API: Upload images directly into public/images/
   app.post('/api/images/upload', (req, res) => {
     try {
-      const { files } = req.body;
-      if (!Array.isArray(files) || files.length === 0) {
+      const { files, filename, dataUrl, roleId } = req.body;
+      const itemsToProcess: Array<{ filename: string; dataUrl: string; roleId?: string }> = [];
+
+      if (Array.isArray(files)) {
+        itemsToProcess.push(...files);
+      } else if (filename && dataUrl) {
+        itemsToProcess.push({ filename, dataUrl, roleId });
+      }
+
+      if (itemsToProcess.length === 0) {
         return res.status(400).json({ error: 'Aucun fichier fourni.' });
       }
 
       const savedFiles: string[] = [];
 
-      for (const item of files) {
-        const { filename, dataUrl } = item;
-        if (!filename || !dataUrl) continue;
+      for (const item of itemsToProcess) {
+        const { filename: rawName, dataUrl: itemDataUrl } = item;
+        const itemRoleId = item.roleId || roleId;
+        if (!rawName || !itemDataUrl) continue;
 
-        // Clean filename and sanitize
-        const safeName = path.basename(filename).replace(/[^a-zA-Z0-9_\- .]/g, '');
-        const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+        // Clean filename and sanitize, normalizing accents to ASCII
+        const ext = path.extname(rawName) || '.png';
+        const nameWithoutExt = path.basename(rawName, ext);
+        const cleanBase = nameWithoutExt
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/['’]/g, ' ')
+          .replace(/[^a-zA-Z0-9_\- ]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const safeName = `${cleanBase}${ext.toLowerCase()}`;
+
+        const base64Data = itemDataUrl.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const targetPath = path.join(publicImagesDir, safeName);
 
         fs.writeFileSync(targetPath, buffer);
-        savedFiles.push(safeName);
+        if (!savedFiles.includes(safeName)) {
+          savedFiles.push(safeName);
+        }
+
+        // Check if this corresponds to a canonical role name
+        const detectedRole = itemRoleId || detectRoleForFilename(rawName);
+        if (detectedRole && CANONICAL_ROLE_FILES[detectedRole]) {
+          const canonicalName = CANONICAL_ROLE_FILES[detectedRole];
+          const canonPath = path.join(publicImagesDir, canonicalName);
+          fs.writeFileSync(canonPath, buffer);
+          if (!savedFiles.includes(canonicalName)) {
+            savedFiles.push(canonicalName);
+          }
+          console.log(`[ImagesAPI] Successfully saved and associated image for role "${detectedRole}" -> ${canonicalName}`);
+        }
+
+        // Also sync into dist/images if dist directory exists
+        const distImagesDir = path.join(process.cwd(), 'dist', 'images');
+        if (fs.existsSync(distImagesDir)) {
+          try {
+            fs.writeFileSync(path.join(distImagesDir, safeName), buffer);
+            if (detectedRole && CANONICAL_ROLE_FILES[detectedRole]) {
+              fs.writeFileSync(path.join(distImagesDir, CANONICAL_ROLE_FILES[detectedRole]), buffer);
+            }
+          } catch {}
+        }
       }
 
       res.json({ success: true, savedFiles, count: savedFiles.length });

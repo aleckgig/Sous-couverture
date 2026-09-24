@@ -222,19 +222,17 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export async function saveLocalRoleImage(roleId: string, dataUrl: string): Promise<void> {
-  const keys = getLookupKeys(roleId);
+  const normId = roleId.toLowerCase().trim();
 
-  // Always save to localStorage as instant sync
-  for (const k of keys) {
-    try {
-      if (!dataUrl) {
-        localStorage.removeItem(`card_img_${k}`);
-      } else {
-        localStorage.setItem(`card_img_${k}`, dataUrl);
-      }
-    } catch {
-      // ignore storage quota errors
+  // Try saving only the main key to localStorage as quick cache (ignore quota errors)
+  try {
+    if (!dataUrl) {
+      localStorage.removeItem(`card_img_${normId}`);
+    } else {
+      localStorage.setItem(`card_img_${normId}`, dataUrl);
     }
+  } catch {
+    // ignore storage quota errors for large images
   }
 
   try {
@@ -242,7 +240,9 @@ export async function saveLocalRoleImage(roleId: string, dataUrl: string): Promi
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      for (const k of keys) {
+      const keysToSave = Array.from(new Set([roleId, normId]));
+
+      for (const k of keysToSave) {
         if (!dataUrl) {
           store.delete(k);
         } else {
@@ -253,14 +253,114 @@ export async function saveLocalRoleImage(roleId: string, dataUrl: string): Promi
       transaction.onerror = () => reject(transaction.error);
     });
   } catch {
-    // LocalStorage already updated
+    // LocalStorage fallback handled
   }
 }
 
+export async function getAllLocalRoleImages(): Promise<Array<{ roleId: string; dataUrl: string }>> {
+  const map = new Map<string, string>();
+
+  // 1. Check localStorage first
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('card_img_') || key.startsWith('role_img_'))) {
+          const rawRoleId = key.replace(/^(card_img_|role_img_)/, '').trim();
+          const val = localStorage.getItem(key);
+          if (val && (val.startsWith('data:image/') || val.length > 500)) {
+            const norm = rawRoleId.toLowerCase();
+            if (!map.has(norm)) {
+              map.set(norm, val);
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Check IndexedDB
+  try {
+    const db = await openDB();
+    await new Promise<void>((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        for (const item of (req.result || [])) {
+          if (item?.roleId && item?.dataUrl && typeof item.dataUrl === 'string') {
+            if (item.dataUrl.startsWith('data:image/') || item.dataUrl.length > 500) {
+              const norm = item.roleId.toLowerCase().trim();
+              if (!map.has(norm)) {
+                map.set(norm, item.dataUrl);
+              }
+            }
+          }
+        }
+        resolve();
+      };
+      req.onerror = () => resolve();
+    });
+  } catch {
+    // ignore
+  }
+
+  return Array.from(map.entries()).map(([roleId, dataUrl]) => ({ roleId, dataUrl }));
+}
+
 export async function getLocalRoleImage(roleId: string): Promise<string | null> {
+  const normId = roleId.toLowerCase().trim();
   const keys = getLookupKeys(roleId);
 
-  // Check localStorage first
+  // Check IndexedDB first (faster and doesn't hit quota limits)
+  try {
+    const db = await openDB();
+    const idbResult = await new Promise<string | null>((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+
+      const mainReq = store.get(normId);
+      mainReq.onsuccess = () => {
+        if (mainReq.result?.dataUrl) {
+          return resolve(mainReq.result.dataUrl);
+        }
+        // Fallback: check aliases in IndexedDB
+        let completed = 0;
+        let found: string | null = null;
+        for (const k of keys) {
+          if (k === normId) {
+            completed++;
+            continue;
+          }
+          const subReq = store.get(k);
+          subReq.onsuccess = () => {
+            completed++;
+            if (subReq.result?.dataUrl && !found) {
+              found = subReq.result.dataUrl;
+            }
+            if (completed >= keys.length) {
+              resolve(found);
+            }
+          };
+          subReq.onerror = () => {
+            completed++;
+            if (completed >= keys.length) {
+              resolve(found);
+            }
+          };
+        }
+      };
+      mainReq.onerror = () => resolve(null);
+    });
+
+    if (idbResult) return idbResult;
+  } catch {
+    // continue to localStorage fallback
+  }
+
+  // Check localStorage as fallback
   for (const k of keys) {
     try {
       const val = localStorage.getItem(`card_img_${k}`);
@@ -270,37 +370,6 @@ export async function getLocalRoleImage(roleId: string): Promise<string | null> 
     }
   }
 
-  // Check IndexedDB
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-
-      let found: string | null = null;
-      let completedCount = 0;
-
-      for (const k of keys) {
-        const req = store.get(k);
-        req.onsuccess = () => {
-          completedCount++;
-          if (req.result?.dataUrl && !found) {
-            found = req.result.dataUrl;
-          }
-          if (completedCount === keys.length) {
-            resolve(found);
-          }
-        };
-        req.onerror = () => {
-          completedCount++;
-          if (completedCount === keys.length) {
-            resolve(found);
-          }
-        };
-      }
-    });
-  } catch {
-    return null;
-  }
+  return null;
 }
 
