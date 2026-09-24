@@ -221,7 +221,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     const reminder = currentStep.reminder ?? '';
 
     if (currentStep.roleId === 'trafiquant') {
-      const trueValue = reminder.startsWith('OUI') ? 'OUI' : 'NON';
+      const trueValue = recruitmentAcceptedTonight === true ? 'OUI' : 'NON';
       return {
         normal: trueValue,
         toSay: trueValue === 'OUI' ? 'NON' : 'OUI',
@@ -334,11 +334,18 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           }
           if (junkieAgentActionType === 'prison') {
             const target = players.find((p) => p.id === junkieAgentTargetId);
-            if (target?.roleId === 'chauffeur' || target?.isInformateur || target?.roleId === 'agent_sous_couverture') {
+            if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
               setJunkieImprisonedPlayerId(undefined);
-              setNoticeMessage('Le Junkie croit avoir réussi son arrestation. L’effet sera traité selon les règles de son pouvoir.');
-            } else {
-              setJunkieImprisonedPlayerId(target?.id);
+              setNoticeMessage('⚠️ Le Junkie est empoisonné : son pouvoir d’Agent échoue silencieusement.');
+            } else if (target?.roleId === 'chauffeur' || target?.perceivedRoleId === 'chauffeur' || target?.isInformateur || target?.roleId === 'agent_sous_couverture') {
+              setJunkieImprisonedPlayerId(undefined);
+              setNoticeMessage('L’arrestation simulée échoue selon les règles du pouvoir.');
+            } else if (target?.isProtected) {
+              setJunkieImprisonedPlayerId(undefined);
+              setNoticeMessage(`L’Avocate protège ${target.name} : l’arrestation échoue cette nuit.`);
+            } else if (target) {
+              setJunkieImprisonedPlayerId(target.id);
+              onUpdatePlayer({ ...target, isPrisoner: true });
             }
             setJunkieAgentFlowStep(3);
             return;
@@ -357,6 +364,16 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               message: 'Veuillez indiquer si le joueur accepte ou refuse le recrutement.',
             });
             return;
+          }
+          if (junkieRecruitmentAccepted === true) {
+            const target = players.find((p) => p.id === junkieAgentTargetId);
+            if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+              setNoticeMessage('⚠️ Le Junkie est empoisonné : le recrutement simulé échoue silencieusement.');
+              setJunkieRecruitmentAccepted(false);
+            } else if (target && !target.isInformateur && target.currentTeam === 'Gang' && target.roleId !== 'homme_de_main' && target.perceivedRoleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
+              onUpdatePlayer({ ...target, isInformateur: true, currentTeam: 'Forces de l’ordre' });
+              setNoticeMessage(`${target.name} devient Informateur immédiatement.`);
+            }
           }
           setJunkieAgentFlowStep(3);
           return;
@@ -383,6 +400,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       if (currentStep.roleId === 'hacker' && (!junkieHackerTargetOneId || !junkieHackerTargetTwoId)) {
         setValidationModal({ isOpen: true, title: 'Sélection requise', message: 'Sélectionnez les 2 joueurs désignés par le Junkie.' });
         return;
+      }
+
+      const liveJunkie = players.find((p) => p.id === actingPlayer?.id);
+      const junkiePowerBlocked = Boolean(liveJunkie?.isPoisoned || liveJunkie?.isInformationPoisoned);
+      if (currentStep.roleId === 'chimiste' && junkieChimisteTargetId && !junkiePowerBlocked) {
+        const target = players.find((p) => p.id === junkieChimisteTargetId);
+        if (target) onUpdatePlayer({ ...target, isPoisoned: true, isInformationPoisoned: true });
+      }
+      if (currentStep.roleId === 'apprenti' && junkieApprentiTargetId && !junkiePowerBlocked && actingPlayer) {
+        onUpdatePlayer({ ...actingPlayer, linkedVoteTargetId: junkieApprentiTargetId });
+      }
+      if (currentStep.roleId === 'avocat_vereux' && junkieAvocateTargetId && !junkiePowerBlocked) {
+        const target = players.find((p) => p.id === junkieAvocateTargetId);
+        if (target) onUpdatePlayer({ ...target, isProtected: true });
       }
 
       if (isLastStep) handleFinish();
@@ -431,15 +462,19 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         }
         if (agentActionType === 'prison') {
           const target = players.find((p) => p.id === agentTargetId);
-          if (isImpairedByChimiste) {
+          if (isImpairedByChimiste || actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
             setNoticeMessage('L’Agent est empoisonné : son arrestation échouera silencieusement.');
             setImprisonedPlayerId(undefined);
-          } else if (target?.roleId === 'chauffeur') {
+          } else if (target?.roleId === 'chauffeur' || target?.perceivedRoleId === 'chauffeur') {
             setNoticeMessage(`Le Chauffeur (${target.name}) est immunisé contre la prison.`);
             setImprisonedPlayerId(undefined);
+          } else if (target?.isProtected) {
+            setNoticeMessage(`L’Avocate protège ${target.name} : l’arrestation échoue cette nuit.`);
+            setImprisonedPlayerId(undefined);
           } else if (target) {
-            setNoticeMessage(`${target.name} sera envoyé en prison.`);
+            setNoticeMessage(`${target.name} est envoyé en prison immédiatement.`);
             setImprisonedPlayerId(target.id);
+            onUpdatePlayer({ ...target, isPrisoner: true });
           }
           setAgentFlowStep(3);
           return;
@@ -454,6 +489,15 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           }
           setAgentFlowStep(3);
           return;
+        }
+        if (recruitmentAcceptedTonight === true) {
+          if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned || isImpairedByChimiste) {
+            setNoticeMessage('⚠️ L’Agent est empoisonné : le recrutement échoue silencieusement.');
+            setRecruitmentAcceptedTonight(false);
+          } else if (agentTarget && !agentTarget.isInformateur && agentTarget.currentTeam === 'Gang' && getInformantsCount(players) < 2) {
+            onUpdatePlayer({ ...agentTarget, isInformateur: true, currentTeam: 'Forces de l’ordre' });
+            setNoticeMessage(`${agentTarget.name} devient Informateur immédiatement.`);
+          }
         }
         if (recruitmentAcceptedTonight === null) {
           setValidationModal({
@@ -486,6 +530,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       });
       return;
     }
+    if (currentStep.roleId === 'chimiste' && chimisteTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ Le Chimiste est empoisonné : son pouvoir échoue silencieusement.');
+      } else {
+        const target = players.find((p) => p.id === chimisteTargetId);
+        if (target) onUpdatePlayer({ ...target, isPoisoned: true, isInformationPoisoned: true });
+      }
+    }
     if (currentStep.roleId === 'apprenti' && !apprentiTargetId) {
       setValidationModal({
         isOpen: true,
@@ -494,6 +546,13 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       });
       return;
     }
+    if (currentStep.roleId === 'apprenti' && apprentiTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ L’Apprenti est empoisonné : son pouvoir échoue silencieusement.');
+      } else if (actingPlayer) {
+        onUpdatePlayer({ ...actingPlayer, linkedVoteTargetId: apprentiTargetId });
+      }
+    }
     if (currentStep.roleId === 'avocat_vereux' && !avocateTargetId) {
       setValidationModal({
         isOpen: true,
@@ -501,6 +560,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         message: 'Sélectionnez le joueur à protéger contre la prison.',
       });
       return;
+    }
+    if (currentStep.roleId === 'avocat_vereux' && avocateTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ L’Avocate est empoisonnée : la protection échoue silencieusement.');
+      } else {
+        const target = players.find((p) => p.id === avocateTargetId);
+        if (target) onUpdatePlayer({ ...target, isProtected: true });
+      }
     }
     if (currentStep.roleId === 'hacker' && (!hackerTargetOneId || !hackerTargetTwoId)) {
       setValidationModal({
@@ -762,9 +829,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               ) : (
                 <>
                   <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                    {currentStep.instruction}
+                    {currentStep.roleId === 'trafiquant'
+                      ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
+                      : currentStep.instruction}
                   </p>
-                  {currentStep.reminder && (
+                  {currentStep.reminder && currentStep.roleId !== 'trafiquant' && (
                     <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
                   )}
                   {isJunkieStep && (
