@@ -240,11 +240,17 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     );
 
     if (existingOtherSeatEntry) {
-      setValidationModal({
-        isOpen: true,
-        title: 'Rôle déjà sélectionné',
-        message: `${ROLES[newRoleId]?.nom ?? newRoleId} est déjà attribué à ${activePlayersList[Number(existingOtherSeatEntry[0])]}. Chaque rôle ne peut être sélectionné qu’une seule fois dans une partie.`,
-      });
+      const existingSeatIndex = Number(existingOtherSeatEntry[0]);
+
+      // Selecting an already-used role swaps the two players' roles.
+      // This preserves the rule that each actual role exists only once.
+      setPlayerRoleMap((prev) => ({
+        ...prev,
+        [targetSeatIndex]: newRoleId,
+        [existingSeatIndex]: currentRoleId,
+      }));
+
+      setRolePickerSeatIndex(null);
       return;
     }
 
