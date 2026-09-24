@@ -103,8 +103,10 @@ export function generateNightSteps(
     isFirstNight ? 'La prison est impossible la première nuit.' : 'Maximum 2 Informateurs. Les prisonniers sont exclus des cibles. Le Chauffeur ne peut pas être emprisonné.');
   push('trafiquant', 80, 'Le Trafiquant', 'Indiquez au Trafiquant OUI si au moins une personne a accepté un recrutement cette nuit, sinon NON.', 'info_only',
     options?.recruitmentAcceptedTonight ? 'OUI : au moins un recrutement a été accepté.' : 'NON : aucun recrutement accepté.');
-  push('blanchisseur', 40, 'Le Blanchisseur', 'Indiquez au Blanchisseur le nombre actuel d’Informateurs.', 'info_only',
-    `Nombre actuel : ${getInformantsCount(players)}.`);
+  if (!isFirstNight) {
+    push('blanchisseur', 40, 'Le Blanchisseur', 'Indiquez au Blanchisseur le nombre actuel d’Informateurs.', 'info_only',
+      `Nombre actuel : ${getInformantsCount(players)}.`);
+  }
   if (!isFirstNight) {
     const roleExecuted = options?.lastExecutedRole ? ROLES[options.lastExecutedRole] : undefined;
     push('nettoyeur', 50, 'La Nettoyeuse',
