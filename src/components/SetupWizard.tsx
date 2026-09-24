@@ -1203,18 +1203,18 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                         }
                       }
                     }}
-                    className={`relative p-3.5 rounded-2xl border-2 text-left cursor-grab active:cursor-grabbing transition-all select-none shadow-md touch-none ${
+                    className={`relative p-2 rounded-2xl border text-left cursor-grab active:cursor-grabbing transition-all select-none shadow-md touch-none ${
                       isDragged
-                        ? 'opacity-30 scale-95 border-dashed border-amber-400 ring-2 ring-amber-400/60'
+                        ? 'opacity-30 scale-95 border-dashed border-stone-500 ring-2 ring-stone-400/60'
                         : isSwapSource
-                        ? 'scale-105 ring-4 ring-amber-400 border-amber-400 bg-amber-950 animate-pulse'
+                        ? 'scale-105 ring-4 ring-stone-500 border-stone-500 bg-[#e8e0d2] animate-pulse'
                         : isDragTarget
-                        ? 'scale-105 ring-4 ring-amber-400 bg-amber-950 border-amber-400'
-                        : 'bg-stone-900 border-stone-800 text-stone-200 hover:border-stone-700 hover:scale-102'
+                        ? 'scale-105 ring-4 ring-stone-500 bg-[#e8e0d2] border-stone-500'
+                        : 'bg-[#eee6d8] border-stone-300 text-stone-800 hover:border-stone-500 hover:scale-102'
                     }`}
                   >
                     {isDragTarget && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500 text-stone-950 font-black text-[9px] shadow-lg whitespace-nowrap z-50">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#d8c8ad] text-stone-900 font-black text-[9px] shadow-lg whitespace-nowrap z-50">
                         ⇄ Échanger
                       </div>
                     )}
