@@ -649,6 +649,44 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     );
   };
 
+
+  const renderSetupProgress = () => (
+    <div className="w-full max-w-4xl mx-auto px-1 pt-1 pb-2">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => currentStep > 0 && setCurrentStep((prev) => prev - 1)}
+          disabled={currentStep === 0}
+          aria-label="Étape précédente"
+          className="w-8 h-8 shrink-0 rounded-full text-stone-500 hover:text-stone-900 hover:bg-[#e7e1d5] disabled:opacity-0 disabled:pointer-events-none flex items-center justify-center transition-colors cursor-pointer"
+        >
+          <ArrowRight className="w-4 h-4 rotate-180" />
+        </button>
+        <div className="flex-1">
+          <div className="flex items-center">
+            {[0, 1, 2].map((step) => (
+              <React.Fragment key={step}>
+                <button
+                  type="button"
+                  onClick={() => step < currentStep && setCurrentStep(step)}
+                  disabled={step >= currentStep}
+                  aria-label={`Aller à l’étape ${step + 1}`}
+                  className={`h-3 w-3 rounded-full border-2 transition-all shrink-0 ${step <= currentStep ? 'bg-stone-800 border-stone-800' : 'bg-[#f5f1e8] border-stone-400'} ${step === currentStep ? 'ring-4 ring-stone-800/10' : ''} ${step < currentStep ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
+                />
+                {step < 2 && (
+                  <div className={`h-0.5 flex-1 transition-all ${step < currentStep ? 'bg-stone-800' : 'bg-stone-300'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="text-center mt-1 text-[9px] font-black uppercase tracking-[0.18em] text-stone-500">
+            Étape {currentStep + 1} / 3
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // STEP 0: WELCOME & MODE SELECTION
   if (currentStep === 0) {
     return (
@@ -737,15 +775,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   // STEP 1: PLAYERS INPUT / ROOM
   if (currentStep === 1) {
     return (
-      <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in text-stone-100">
-        <div className="bg-[#f4efe4] border border-stone-300 rounded-3xl p-3 sm:p-5 shadow-sm space-y-3">
-          <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+      <div className="w-full max-w-4xl mx-auto animate-in fade-in text-stone-800">
+        {renderSetupProgress()}
+        <div className="space-y-4 px-1 sm:px-2">
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-stone-300">
             <div>
-              <span className="text-[10px] uppercase font-black tracking-widest text-stone-700">
-                Étape 1 / 3
-              </span>
-              <h2 className="font-serif font-black text-xl text-stone-900">
-                {gameMode === 'phone' ? 'Salle Connectée par QR Code' : 'Enregistrement des Joueurs'}
+              <h2 className="font-serif font-black text-xl sm:text-2xl text-stone-900">
+                {gameMode === 'phone' ? 'Salle connectée par QR Code' : 'Enregistrement des joueurs'}
               </h2>
             </div>
             <span className="px-3 py-1 rounded-xl bg-stone-950 border border-amber-500/40 text-amber-300 font-black text-xs">
@@ -847,20 +883,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             </div>
           )}
 
-          <div className="pt-2 border-t border-stone-300 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(0)}
-              className="px-4 py-2 rounded-xl bg-[#e2ded5] hover:bg-[#d8d3c8] border border-stone-300 text-stone-600 font-bold text-xs cursor-pointer"
-            >
-              ← Retour
-            </button>
+          <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={handleProceedToRoleAssignments}
               className="px-5 py-2.5 rounded-2xl bg-[#b8aa91] hover:bg-[#aa9b82] border border-[#9d907a] text-stone-900 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <span>Attribution des Rôles</span>
+              <span>Attribution des rôles</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -881,17 +910,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     const isHackerSelected = Object.values(playerRoleMap).includes('hacker');
 
     return (
-      <div className="max-w-4xl mx-auto space-y-3 animate-in fade-in text-stone-800">
-        <div className="bg-[#f1eadf] border border-stone-300 rounded-3xl p-2.5 sm:p-3 shadow-sm space-y-2">
-          <div className="flex items-center justify-between gap-2 border-b border-stone-300 pb-1.5">
-            <div>
-              <span className="text-[10px] uppercase font-black tracking-widest text-stone-500">
-                Étape 2 / 3
-              </span>
-              <h2 className="font-serif font-black text-base sm:text-lg text-stone-900 whitespace-nowrap">
-                Attribution des rôles
-              </h2>
-            </div>
+      <div className="w-full max-w-6xl mx-auto animate-in fade-in text-stone-800">
+        {renderSetupProgress()}
+        <div className="space-y-2 px-1 sm:px-2">
+          <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-300">
+            <h2 className="font-serif font-black text-lg sm:text-2xl text-stone-900 whitespace-nowrap">
+              Attribution des rôles
+            </h2>
 
             <div className="flex items-center gap-2">
               <button
@@ -1143,14 +1168,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          <div className="pt-2 border-t border-stone-300 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="px-4 py-2 rounded-xl bg-[#e2ded5] hover:bg-[#d8d3c8] border border-stone-300 text-stone-600 font-bold text-xs cursor-pointer"
-            >
-              ← Retour
-            </button>
+          <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={handleProceedToSecrets}
@@ -1426,14 +1444,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
   // STEP 3: STORYTELLER SECRETS & LAUNCH
   return (
-    <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in text-stone-100">
-      <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-        <div className="border-b border-stone-800 pb-3">
-          <span className="text-[10px] uppercase font-black tracking-widest text-amber-400">
-            Étape 3 / 3
-          </span>
-          <h2 className="font-serif font-black text-xl text-white">
-            Configurations Spéciales & Lancement
+    <div className="w-full max-w-4xl mx-auto animate-in fade-in text-stone-800">
+      {renderSetupProgress()}
+      <div className="space-y-4 px-1 sm:px-2">
+        <div className="pb-2 border-b border-stone-300">
+          <h2 className="font-serif font-black text-xl sm:text-2xl text-stone-900">
+            Configurations spéciales & lancement
           </h2>
         </div>
 
@@ -1551,21 +1567,15 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           </button>
         </div>
 
-        <div className="pt-3 border-t border-stone-800 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setCurrentStep(2)}
-            className="px-4 py-2 rounded-xl bg-stone-800 text-xs font-bold cursor-pointer"
-          >
-            ← Retour
-          </button>
+        <div className="flex justify-end pt-1">
           <button
             type="button"
             onClick={handleLaunchGame}
             id="btn-launch-game"
-            className="px-6 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-serif font-black text-sm flex items-center gap-2 cursor-pointer shadow-xl shadow-amber-950/60"
+            className="px-6 py-3.5 rounded-2xl bg-[#b8aa91] hover:bg-[#aa9b82] border border-[#9d907a] text-stone-900 font-serif font-black text-sm flex items-center gap-2 cursor-pointer shadow-sm"
           >
-            <span>Lancer la Partie (Nuit 1)</span>
+            <span>Lancer la partie</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
