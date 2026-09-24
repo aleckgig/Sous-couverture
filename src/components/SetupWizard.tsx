@@ -36,6 +36,8 @@ import { RoleCardModal } from './RoleCardModal';
 import { ValidationAlertModal } from './ValidationAlertModal';
 import { ImageManagerModal } from './ImageManagerModal';
 import { RulesValidationModal } from './RulesValidationModal';
+import { getRoleCardImageUrl } from '../utils/roleCardImages';
+import { getAllLocalRoleImages } from '../utils/cardStorage';
 import {
   generateBalancedSousCouvertureRoles,
   getRecommendedGangComposition,
