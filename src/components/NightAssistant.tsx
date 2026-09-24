@@ -385,6 +385,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         return;
       }
 
+      const liveJunkie = players.find((p) => p.id === actingPlayer?.id);
+      const junkiePowerBlocked = Boolean(liveJunkie?.isPoisoned || liveJunkie?.isInformationPoisoned);
+      if (currentStep.roleId === 'chimiste' && junkieChimisteTargetId && !junkiePowerBlocked) {
+        const target = players.find((p) => p.id === junkieChimisteTargetId);
+        if (target) onUpdatePlayer({ ...target, isPoisoned: true, isInformationPoisoned: true });
+      }
+      if (currentStep.roleId === 'apprenti' && junkieApprentiTargetId && !junkiePowerBlocked && actingPlayer) {
+        onUpdatePlayer({ ...actingPlayer, linkedVoteTargetId: junkieApprentiTargetId });
+      }
+      if (currentStep.roleId === 'avocat_vereux' && junkieAvocateTargetId && !junkiePowerBlocked) {
+        const target = players.find((p) => p.id === junkieAvocateTargetId);
+        if (target) onUpdatePlayer({ ...target, isProtected: true });
+      }
+
       if (isLastStep) handleFinish();
       else setCurrentStepIndex((prev) => prev + 1);
       return;
