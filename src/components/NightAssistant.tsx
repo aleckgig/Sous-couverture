@@ -957,7 +957,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                       ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
                     </div>
                   )}
-                </>}
+                </>)}
 
                   {isJunkieStep && currentStep.roleId === 'chimiste' && (
             <div className="mt-4">
