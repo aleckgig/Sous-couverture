@@ -91,6 +91,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [agentActionChosen, setAgentActionChosen] = useState(false);
   const [agentFlowStep, setAgentFlowStep] = useState(0);
   const [agentBluffShown, setAgentBluffShown] = useState(false);
+  const [agentBluffContinueReady, setAgentBluffContinueReady] = useState(false);
   const [agentTargetId, setAgentTargetId] = useState<string>('');
   const [recruitmentAcceptedTonight, setRecruitmentAcceptedTonight] = useState<boolean | null>(null);
   const [imprisonedPlayerId, setImprisonedPlayerId] = useState<string | undefined>(undefined);
@@ -123,6 +124,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setAgentActionChosen(false);
     setAgentFlowStep(0);
     setAgentBluffShown(false);
+    setAgentBluffContinueReady(false);
     setAgentTargetId('');
     setRecruitmentAcceptedTonight(null);
     setImprisonedPlayerId(undefined);
@@ -148,6 +150,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     localStorage.setItem('sc_night_step_index', currentStepIndex.toString());
     setAgentFlowStep(0);
     setAgentBluffShown(false);
+    setAgentBluffContinueReady(false);
     setAgentActionChosen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
     setNoticeMessage(null);
@@ -436,6 +439,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         }
       }
 
+      // After the bluff card is closed, keep the Storyteller on the same screen
+      // until they explicitly press Continue. This prevents the night from
+      // jumping directly to the next role when the modal is dismissed.
+      if (isFirstNight && agentBluffShown && !agentBluffContinueReady) {
+        setAgentBluffContinueReady(true);
+        return;
+      }
+
       if (agentFlowStep === 0) {
         if (!agentActionChosen) {
           setValidationModal({
@@ -622,7 +633,9 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       ? 'Confirmer'
       : isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && junkieAgentFlowStep === 3
         ? (isLastStep ? 'Réveiller la ville' : 'Continuer')
-        : currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2
+        : currentStep.roleId === 'agent_sous_couverture' && isFirstNight && agentBluffShown && !agentBluffContinueReady
+      ? 'Continuer'
+      : currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2
       ? 'Confirmer'
       : currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 3
         ? (isLastStep ? 'Réveiller la ville' : 'Continuer')
@@ -688,7 +701,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 pt-3 pb-2">
         <div className="max-w-md mx-auto space-y-3">
 
-          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && isFirstNight && !agentBluffShown && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && isFirstNight && (!agentBluffShown || !agentBluffContinueReady) && (
             <div className="space-y-3">
               <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center">
                 <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Première étape — carte bluff</p>
@@ -698,14 +711,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               {actingPlayer?.agentBluffRoleId ? (
                 <button
                   type="button"
+                  disabled={agentBluffShown}
                   onClick={() => {
                     setCardModalRoleId(actingPlayer.agentBluffRoleId!);
                     setAgentBluffShown(true);
                   }}
-                  className="w-full py-4 rounded-xl bg-blue-700 text-white font-black text-sm shadow-sm"
+                  className="w-full py-4 rounded-xl bg-blue-700 text-white font-black text-sm shadow-sm disabled:opacity-60"
                 >
-                  <Eye className="inline w-5 h-5 mr-2" /> MONTRER LA CARTE BLUFF
+                  <Eye className="inline w-5 h-5 mr-2" /> {agentBluffShown ? 'CARTE BLUFF MONTRÉE' : 'MONTRER LA CARTE BLUFF'}
                 </button>
+                {agentBluffShown && (
+                  <p className="text-center text-xs font-bold text-blue-800">
+                    La carte a été montrée à l’Agent. Appuyez sur « Continuer » pour passer à son action.
+                  </p>
+                )}
               ) : (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 font-bold">
                   Aucune carte bluff n’a été configurée pour cet Agent.
@@ -714,7 +733,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             </div>
           )}
 
-          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (!isFirstNight || agentBluffShown) && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (!isFirstNight || (agentBluffShown && agentBluffContinueReady)) && (
             <>
               <p className="text-center text-base sm:text-lg font-medium text-stone-800 mb-3">
                 Que fait-il cette nuit ?
