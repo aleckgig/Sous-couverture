@@ -150,6 +150,16 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setNoticeMessage(null);
   }, [currentStepIndex]);
 
+  useEffect(() => {
+    if (!currentStep || !currentStepDisabled) return;
+
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex((prev) => prev + 1);
+    } else {
+      handleFinish();
+    }
+  }, [currentStepIndex, currentStep, currentStepDisabled, steps.length]);
+
   const handleFinish = () => {
     localStorage.removeItem('sc_night_step_index');
     onFinishNight({
@@ -181,6 +191,20 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const isJunkieStep = Boolean(currentStep?.isJunkieSimulation);
   const junkiePerceivedRoleId = isJunkieStep ? currentStep?.roleId : undefined;
   const isLastStep = currentStepIndex >= steps.length - 1;
+
+  const currentStepPlayer = currentStep?.activePlayerIds?.[0]
+    ? players.find((p) => p.id === currentStep.activePlayerIds?.[0])
+    : currentStep
+      ? players.find((p) => p.roleId === currentStep.roleId)
+      : undefined;
+
+  // A player can become an Informateur during the Agent's step.
+  // Night steps are generated at the start of the night, so later steps
+  // must be checked again against the live player state before being shown.
+  const currentStepDisabled = Boolean(
+    currentStepPlayer &&
+    (!currentStepPlayer.isAlive || currentStepPlayer.isPrisoner || currentStepPlayer.isInformateur)
+  );
 
   const role = currentStep ? ROLES[currentStep.roleId] : undefined;
   const actingPlayer = currentStep
