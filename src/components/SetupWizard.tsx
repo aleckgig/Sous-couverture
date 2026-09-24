@@ -699,13 +699,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   if (currentStep === 1) {
     return (
       <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in text-stone-100">
-        <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div className="bg-[#f4efe4] border border-stone-300 rounded-3xl p-3 sm:p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-stone-800 pb-3">
             <div>
               <span className="text-[10px] uppercase font-black tracking-widest text-amber-400">
                 Étape 1 / 3
               </span>
-              <h2 className="font-serif font-black text-xl text-white">
+              <h2 className="font-serif font-black text-xl text-stone-900">
                 {gameMode === 'phone' ? 'Salle Connectée par QR Code' : 'Enregistrement des Joueurs'}
               </h2>
             </div>
@@ -842,31 +842,31 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     const isHackerSelected = Object.values(playerRoleMap).includes('hacker');
 
     return (
-      <div className="max-w-3xl mx-auto space-y-4 animate-in fade-in text-stone-100">
+      <div className="max-w-4xl mx-auto space-y-3 animate-in fade-in text-stone-800">
         <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-800 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-300 pb-2">
             <div>
-              <span className="text-[10px] uppercase font-black tracking-widest text-amber-400">
+              <span className="text-[10px] uppercase font-black tracking-widest text-stone-500">
                 Étape 2 / 3
               </span>
               <h2 className="font-serif font-black text-xl text-white">
                 Attribution des Rôles autour de la Table
               </h2>
-              <p className="text-xs text-stone-400 mt-0.5">
+              <p className="text-xs text-stone-600 mt-0.5">
                 Déterminez qui est assis à côté de qui autour de la table pour les pouvoirs de voisinage.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               {/* Layout switcher */}
-              <div className="flex items-center gap-1 bg-stone-950 p-1 rounded-xl border border-stone-800 text-xs">
+              <div className="flex items-center gap-1 bg-[#e8e0d2] p-1 rounded-xl border border-stone-300 text-xs">
                 <button
                   type="button"
                   onClick={() => setStep2LayoutMode('circle')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                     step2LayoutMode === 'circle'
-                      ? 'bg-amber-500 text-stone-950 font-black shadow'
-                      : 'text-stone-400 hover:text-white'
+                      ? 'bg-[#d8c8ad] text-stone-900 font-black shadow-sm'
+                      : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
                   Table Ronde
@@ -887,7 +887,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
               <button
                 type="button"
                 onClick={handleRegenerateRandomBalanced}
-                className="px-3 py-1.5 rounded-xl bg-stone-950 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1 hover:bg-stone-800 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-[#eee6d8] border border-stone-300 text-stone-700 text-xs font-bold flex items-center gap-1 hover:bg-white cursor-pointer"
                 title="Générer une répartition aléatoire équilibrée"
               >
                 <span>Rééquilibrer</span>
@@ -897,17 +897,17 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
           {/* Active Swap Selection Banner */}
           {swapActiveSeatIndex !== null && (
-            <div className="flex items-center justify-between bg-amber-950/90 border-2 border-amber-500 rounded-2xl px-3.5 py-2.5 text-amber-200 shadow-xl animate-pulse">
+            <div className="flex items-center justify-between bg-[#ebe2d3] border border-stone-400 rounded-2xl px-3.5 py-2.5 text-stone-700 shadow-sm animate-pulse">
               <div className="flex items-center gap-2 text-xs font-bold min-w-0">
-                <Move className="w-4 h-4 text-amber-400 shrink-0" />
+                <Move className="w-4 h-4 text-stone-600 shrink-0" />
                 <span className="truncate">
-                  Échange activé pour <strong className="text-white">#{swapActiveSeatIndex + 1} {activePlayersList[swapActiveSeatIndex]}</strong> : touchez un autre siège pour échanger.
+                  Échange activé pour <strong className="text-stone-900">#{swapActiveSeatIndex + 1} {activePlayersList[swapActiveSeatIndex]}</strong> : touchez un autre siège pour échanger.
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setSwapActiveSeatIndex(null)}
-                className="px-2.5 py-1 rounded-xl bg-stone-900 border border-amber-500/50 text-xs font-black text-amber-300 hover:text-white cursor-pointer ml-2 shrink-0"
+                className="px-2.5 py-1 rounded-xl bg-white border border-stone-300 text-xs font-black text-stone-700 hover:text-stone-950 cursor-pointer ml-2 shrink-0"
               >
                 Annuler
               </button>
@@ -917,20 +917,15 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           {/* CIRCLE LAYOUT: Around the table */}
           {step2LayoutMode === 'circle' ? (
             <div
-              className="relative w-full aspect-[4/5] sm:aspect-square max-w-[430px] mx-auto my-2 rounded-[2rem] border border-amber-950/60 shadow-2xl overflow-visible"
-              style={{
-                backgroundColor: '#2a190f',
-                backgroundImage:
-                  'radial-gradient(circle at 50% 48%, rgba(170,105,45,0.16), transparent 48%), repeating-linear-gradient(88deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 2px, transparent 3px, transparent 15px)',
-              }}
+              className="relative w-full aspect-square max-w-[560px] mx-auto my-1 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#e9dfcf]"
             >
               {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-stone-950/85 border border-amber-900/50 shadow-inner flex flex-col items-center justify-center p-2 text-center">
-                  <span className="text-[10px] sm:text-xs text-amber-300 font-serif font-black uppercase tracking-wider">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-[#f4efe4] border border-stone-400 shadow-inner flex flex-col items-center justify-center p-2 text-center">
+                  <span className="text-[10px] sm:text-xs text-stone-800 font-serif font-black uppercase tracking-wider">
                     Table de jeu
                   </span>
-                  <span className="text-[8px] sm:text-[9px] text-stone-400 mt-1">
+                  <span className="text-[8px] sm:text-[9px] text-stone-500 mt-1">
                     {activePlayersList.length} joueurs
                   </span>
                 </div>
@@ -942,8 +937,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 {activePlayersList.map((playerName, seatIdx) => {
                   const total = activePlayersList.length;
                   const angle = (seatIdx / total) * 2 * Math.PI - Math.PI / 2;
-                  const rx = total > 12 ? 39 : 38;
-                  const ry = total > 12 ? 35 : 34;
+                  const rx = total > 12 ? 40 : 41;
+                  const ry = total > 12 ? 39 : 41;
                   const x = 50 + rx * Math.cos(angle);
                   const y = 50 + ry * Math.sin(angle);
 
@@ -966,10 +961,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                     : "GANG";
 
                   const campClasses = isAgent
-                    ? "bg-blue-600/95 text-blue-50 border-blue-300/50"
+                    ? "bg-[#9db5b8]/95 text-stone-900 border-[#718f93]"
                     : roleInfo?.isPerturbateur
-                    ? "bg-purple-600/95 text-purple-50 border-purple-300/50"
-                    : "bg-red-700/95 text-red-50 border-red-300/40";
+                    ? "bg-[#b59bc5]/95 text-stone-900 border-[#9277a5]"
+                    : "bg-[#a8a39a]/95 text-stone-900 border-[#817c73]";
 
                   return (
                     <div
@@ -1044,13 +1039,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                         }}
                         className={`group relative touch-none cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
                           total > 12
-                            ? 'w-[64px] xs:w-[70px] sm:w-[86px] md:w-[96px]'
-                            : 'w-[78px] xs:w-[84px] sm:w-[100px] md:w-[112px]'
+                            ? 'w-[58px] xs:w-[64px] sm:w-[82px] md:w-[92px]'
+                            : 'w-[68px] xs:w-[74px] sm:w-[92px] md:w-[104px]'
                         } ${
                           isDragged
                             ? 'opacity-30 scale-95'
                             : isSwapSource
-                            ? 'ring-4 ring-amber-400 rounded-2xl animate-pulse'
+                            ? 'ring-4 ring-stone-500 rounded-2xl animate-pulse'
                             : isDragTarget
                             ? 'ring-4 ring-amber-400 rounded-2xl'
                             : 'hover:scale-105'
@@ -1058,7 +1053,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                       >
                         {/* Player name bubble — does not modify the role-card image */}
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 max-w-[calc(100%+20px)]">
-                          <div className="px-2.5 py-1 rounded-full bg-stone-950/95 border border-stone-600/90 text-white text-[9px] sm:text-[10px] font-black leading-none whitespace-nowrap shadow-lg truncate max-w-[120px]">
+                          <div className="px-2.5 py-1 rounded-full bg-[#f4efe4] border border-stone-400 text-stone-900 text-[9px] sm:text-[10px] font-black leading-none whitespace-nowrap shadow-lg truncate max-w-[120px]">
                             {playerName}
                           </div>
                         </div>
@@ -1073,7 +1068,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                               className="w-full h-full object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.5)]"
                             />
                           ) : (
-                            <div className="w-full aspect-[2/3] rounded-2xl bg-stone-900 border border-stone-700 flex items-center justify-center p-2 text-center">
+                            <div className="w-full aspect-[2/3] rounded-2xl bg-[#e9dfcf] border border-stone-300 flex items-center justify-center p-2 text-center">
                               <span className="text-[9px] font-bold text-stone-300">
                                 {roleInfo?.nom || assignedRoleId}
                               </span>
@@ -1082,7 +1077,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
                           {isFaussePisteThisSeat && (
                             <span
-                              className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-stone-950 flex items-center justify-center text-[11px] font-black border-2 border-stone-950 shadow-lg"
+                              className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#d8c8ad] text-stone-900 flex items-center justify-center text-[11px] font-black border-2 border-[#f4efe4] shadow-lg"
                               title="Fausse Piste (Hacker en jeu)"
                             >
                               🎯
@@ -1136,7 +1131,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             </div>
           ) : (
             /* GRID OF SEATED PLAYERS */
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
               {activePlayersList.map((playerName, seatIdx) => {
                 const assignedRoleId = playerRoleMap[seatIdx] || 'guetteur';
                 const roleInfo = ROLES[assignedRoleId];
