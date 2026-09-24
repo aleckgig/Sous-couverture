@@ -922,8 +922,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                   </p>
                 );
               }
-              return null;
-            })()
+              return (
+                <p className="text-center text-base sm:text-lg font-medium text-stone-800">
+                  {currentStep.instruction}
+                </p>
+              );            })()
           )}
           {!isJunkieStep && (
             <p className="text-center text-base sm:text-lg font-medium text-stone-800">
