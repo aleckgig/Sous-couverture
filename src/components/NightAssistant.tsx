@@ -191,6 +191,44 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const isImpairedByChimiste = Boolean(actingPlayer && chimisteTargetId && actingPlayer.id === chimisteTargetId);
   const agentTarget = players.find((p) => p.id === agentTargetId);
   const activePerturbatorRoleIds = getActivePerturbatorRoleIds(players);
+  const poisonedInfo = (() => {
+    if (!isImpairedByChimiste || currentStep?.actionType !== 'info_only' || !currentStep) return null;
+
+    const reminder = currentStep.reminder ?? '';
+
+    if (currentStep.roleId === 'trafiquant') {
+      const trueValue = reminder.startsWith('OUI') ? 'OUI' : 'NON';
+      return {
+        normal: trueValue,
+        toSay: trueValue === 'OUI' ? 'NON' : 'OUI',
+      };
+    }
+
+    if (currentStep.roleId === 'blanchisseur') {
+      const match = reminder.match(/(\\d+)/);
+      const trueValue = match ? Number(match[1]) : null;
+      if (trueValue !== null) {
+        return {
+          normal: String(trueValue),
+          toSay: String(trueValue === 0 ? 1 : 0),
+        };
+      }
+    }
+
+    if (currentStep.roleId === 'pickpocket') {
+      const match = reminder.match(/(0|1|2)/);
+      const trueValue = match ? Number(match[1]) : null;
+      if (trueValue !== null) {
+        return {
+          normal: String(trueValue),
+          toSay: String(trueValue === 1 ? 0 : 1),
+        };
+      }
+    }
+
+    return null;
+  })();
+
   const roleAccent =
     role?.camp_initial === "Forces de l'ordre"
       ? { bg: 'bg-blue-50', line: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', button: 'bg-blue-700', strokePosition: '0%' }
@@ -689,21 +727,30 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
           {currentStep.roleId !== 'agent_sous_couverture' && (
             <>
-              <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                {currentStep.instruction}
-              </p>
-              {currentStep.reminder && (
-                <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
-              )}
-              {isJunkieStep && (
-                <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
-                  ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
+              {poisonedInfo ? (
+                <div className="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center space-y-2">
+                  <p className="text-xs font-black uppercase tracking-wide text-red-800">⚠️ Joueur empoisonné</p>
+                  <p className="text-sm text-red-900">
+                    <span className="font-black">Information normale — NE PAS DIRE :</span> {poisonedInfo.normal}
+                  </p>
+                  <p className="text-base font-black text-red-950">
+                    <span className="font-black">Information à dire :</span> {poisonedInfo.toSay}
+                  </p>
                 </div>
-              )}
-              {isImpairedByChimiste && currentStep.actionType === 'info_only' && (
-                <p className="text-center text-xs font-bold text-red-700 max-w-sm mx-auto">
-                  Cette information est fausse : le Conteur doit transmettre une valeur incorrecte.
-                </p>
+              ) : (
+                <>
+                  <p className="text-center text-base sm:text-lg font-medium text-stone-800">
+                    {currentStep.instruction}
+                  </p>
+                  {currentStep.reminder && (
+                    <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
+                  )}
+                  {isJunkieStep && (
+                    <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
+                      ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -922,11 +969,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
             <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">{noticeMessage}</div>
           )}
 
-          {isImpairedByChimiste && (
-            <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-800">
-              Le Chimiste a ciblé ce joueur. L'information doit être fausse et les effets réels échouent silencieusement.
-            </div>
-          )}
+
         </div>
       </div>
 
