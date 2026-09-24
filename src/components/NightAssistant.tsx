@@ -903,54 +903,63 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               ) : (
                 <>
                   {isJunkieStep && currentStep.actionType === 'info_only' && (
-            (() => {
-              const trueCount = currentStep.roleId === 'blanchisseur'
-                ? getInformantsCount(players)
-                : currentStep.roleId === 'pickpocket'
-                  ? getPickpocketForcesDeLOrdreCount(players, actingPlayer!).count
-                  : currentStep.roleId === 'trafiquant'
-                    ? (recruitmentAcceptedTonight === true ? 'OUI' : 'NON')
-                    : null;
-              const falseCount = typeof trueCount === 'number'
-                ? (trueCount === 0 ? 1 : trueCount === 1 ? 0 : 1)
-                : trueCount === 'OUI' ? 'NON' : trueCount === 'NON' ? 'OUI' : null;
-              if (trueCount !== null && falseCount !== null) {
-                return (
-                  <p className="text-center text-base sm:text-lg font-black text-stone-800">
-                    Dites au Junkie : <span className="text-purple-700">{falseCount}</span>
-                    <span className="text-sm font-bold text-stone-500"> (bonne réponse : {trueCount})</span>
-                  </p>
-                );
-              }
-              return (
-                <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                  {currentStep.instruction}
-                </p>
-              );            })()
-          )}
-          {!isJunkieStep && (
-            <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-              {currentStep.roleId === 'trafiquant'
-                ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
-                : currentStep.instruction}
-            </p>
-          )}
-          {currentStep.reminder && currentStep.roleId !== 'trafiquant' && !isJunkieStep && (
-            <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
-          )}
-          {isJunkieStep && currentStep.actionType !== 'info_only' && (
-            <p className="text-center text-base sm:text-lg font-medium text-stone-800">{currentStep.instruction}</p>
-          )}
-          {isJunkieStep && currentStep.actionType !== 'info_only' && (
-            <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
-              ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
-            </div>
-          )}>
-              )}
-            </>
-          )}
+                    (() => {
+                      const trueValue =
+                        currentStep.roleId === 'blanchisseur'
+                          ? getInformantsCount(players)
+                          : currentStep.roleId === 'pickpocket'
+                            ? getPickpocketForcesDeLOrdreCount(players, actingPlayer!).count
+                            : currentStep.roleId === 'trafiquant'
+                              ? (recruitmentAcceptedTonight === true ? 'OUI' : 'NON')
+                              : null;
 
-          {isJunkieStep && currentStep.roleId === 'chimiste' && (
+                      const falseValue =
+                        typeof trueValue === 'number'
+                          ? (trueValue === 0 ? 1 : trueValue === 1 ? 0 : 1)
+                          : trueValue === 'OUI'
+                            ? 'NON'
+                            : trueValue === 'NON'
+                              ? 'OUI'
+                              : null;
+
+                      if (trueValue !== null && falseValue !== null) {
+                        return (
+                          <p className="text-center text-base sm:text-lg font-black text-stone-800">
+                            Dites au Junkie : <span className="text-purple-700">{falseValue}</span>
+                            <span className="text-sm font-bold text-stone-500"> (bonne réponse : {trueValue})</span>
+                          </p>
+                        );
+                      }
+
+                      return (
+                        <p className="text-center text-base sm:text-lg font-medium text-stone-800">
+                          {currentStep.instruction}
+                        </p>
+                      );
+                    })()
+                  )}
+
+                  {!isJunkieStep && (
+                    <p className="text-center text-base sm:text-lg font-medium text-stone-800">
+                      {currentStep.roleId === 'trafiquant'
+                        ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
+                        : currentStep.instruction}
+                    </p>
+                  )}
+                  {currentStep.reminder && currentStep.roleId !== 'trafiquant' && !isJunkieStep && (
+                    <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
+                  )}
+                  {isJunkieStep && currentStep.actionType !== 'info_only' && (
+                    <p className="text-center text-base sm:text-lg font-medium text-stone-800">{currentStep.instruction}</p>
+                  )}
+                  {isJunkieStep && currentStep.actionType !== 'info_only' && (
+                    <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
+                      ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
+                    </div>
+                  )}
+                </>)}
+
+                  {isJunkieStep && currentStep.roleId === 'chimiste' && (
             <div className="mt-4">
               <PlayerSelect
                 value={junkieChimisteTargetId}
@@ -1163,7 +1172,8 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           {noticeMessage && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">{noticeMessage}</div>
           )}
-
+        </>
+      )}
 
         </div>
       </div>
