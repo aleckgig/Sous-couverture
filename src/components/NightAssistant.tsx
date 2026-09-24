@@ -829,9 +829,11 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               ) : (
                 <>
                   <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                    {currentStep.instruction}
+                    {currentStep.roleId === 'trafiquant'
+                      ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
+                      : currentStep.instruction}
                   </p>
-                  {currentStep.reminder && (
+                  {currentStep.reminder && currentStep.roleId !== 'trafiquant' && (
                     <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
                   )}
                   {isJunkieStep && (
