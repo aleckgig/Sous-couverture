@@ -95,31 +95,31 @@ export function generateNightSteps(
   if (isFirstNight) {
     push('revendeur_armes', 20, 'Le Revendeur d’armes', 'Montrez au Revendeur d’armes une carte Perturbateur actuellement en jeu.', 'info_only');
   }
-  push('agent_sous_couverture', 30, isFirstNight ? 'Agent sous couverture' : 'Agent sous couverture',
+  push('agent_sous_couverture', 70, isFirstNight ? 'Agent sous couverture' : 'Agent sous couverture',
     isFirstNight
       ? 'L’Agent choisit de recruter 1 membre du Gang ou de ne rien faire.'
       : 'L’Agent choisit de recruter 1 membre du Gang, d’en envoyer 1 en prison ou de ne rien faire.',
     'agent_choice',
     isFirstNight ? 'La prison est impossible la première nuit.' : 'Maximum 2 Informateurs. Les prisonniers sont exclus des cibles. Le Chauffeur ne peut pas être emprisonné.');
-  push('trafiquant', 40, 'Le Trafiquant', 'Indiquez au Trafiquant OUI si au moins une personne a accepté un recrutement cette nuit, sinon NON.', 'info_only',
+  push('trafiquant', 80, 'Le Trafiquant', 'Indiquez au Trafiquant OUI si au moins une personne a accepté un recrutement cette nuit, sinon NON.', 'info_only',
     options?.recruitmentAcceptedTonight ? 'OUI : au moins un recrutement a été accepté.' : 'NON : aucun recrutement accepté.');
-  push('blanchisseur', 50, 'Le Blanchisseur', 'Indiquez au Blanchisseur le nombre actuel d’Informateurs.', 'info_only',
+  push('blanchisseur', 40, 'Le Blanchisseur', 'Indiquez au Blanchisseur le nombre actuel d’Informateurs.', 'info_only',
     `Nombre actuel : ${getInformantsCount(players)}.`);
   if (!isFirstNight) {
     const roleExecuted = options?.lastExecutedRole ? ROLES[options.lastExecutedRole] : undefined;
-    push('nettoyeur', 60, 'La Nettoyeuse',
+    push('nettoyeur', 50, 'La Nettoyeuse',
       roleExecuted ? `Montrez à la Nettoyeuse la carte de ${roleExecuted.nom}.` : 'Indiquez à la Nettoyeuse qu’aucune exécution par vote n’a eu lieu hier.',
       'info_only');
   }
   const pick = active('pickpocket');
   if (pick) {
     const { count } = getPickpocketForcesDeLOrdreCount(players, pick);
-    steps.push({ roleId: 'pickpocket', order: 70, title: 'Le Pickpocket',
+    steps.push({ roleId: 'pickpocket', order: 60, title: 'Le Pickpocket',
       instruction: `Indiquez au Pickpocket ${count} (0, 1 ou 2).`,
       reminder: `Nombre calculé : ${count}. Prisonniers/exécutés exclus de la chaîne des voisins.`,
       actionType: 'info_only', activePlayerIds: [pick.id] });
   }
-  push('hacker', 80, 'Le Hacker', 'Le Hacker choisit 2 joueurs. Répondez OUI si l’Agent ou la Fausse piste est parmi eux, sinon NON.', 'select_two_players',
+  push('hacker', 30, 'Le Hacker', 'Le Hacker choisit 2 joueurs. Répondez OUI si l’Agent ou la Fausse piste est parmi eux, sinon NON.', 'select_two_players',
     'La réponse est OUI si l’un des deux joueurs est l’Agent ou la Fausse piste.');
 
   // The Junkie performs the nightly action of the role shown on their false card.
