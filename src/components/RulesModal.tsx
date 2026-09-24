@@ -251,7 +251,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({
               </p>
               <ul className="list-disc list-inside space-y-1 text-stone-300">
                 <li>
-                  <strong>Recrutement (Nuit 1 & nuits impaires) :</strong> L'Agent peut proposer à un membre du Gang de devenir son <em>Informateur</em>. Si accepté, l'informateur rejoint le camp des Forces de l'ordre, apprend l'identité de l'Agent, mais conserve son pouvoir et son rôle d'origine.
+                  <strong>Recrutement (Nuit 1 & nuits impaires) :</strong> L'Agent peut proposer à un membre du Gang de devenir son <em>Informateur</em>. Si accepté, l'informateur rejoint le camp des Forces de l'ordre, apprend l'identité de l'Agent, mais perd immédiatement le pouvoir de son rôle. Il reste toutefois pleinement actif : il peut parler, voter, être ciblé et participer aux déductions.
                 </li>
                 <li>
                   <strong>Incarcération (Prison) :</strong> L'Agent peut envoyer un membre suspect en prison. Le prisonnier ne peut ni parler, ni voter, ni être exécuté, mais son état est un statut réversible (il n'est pas mort).
