@@ -195,10 +195,12 @@ export function generateNightSteps(
           'Le Junkie croit être Le Trafiquant. Sa donnée doit être fausse.');
         break;
       case 'blanchisseur':
-        pushJunkie('blanchisseur',
-          '⚠️ FAUSSE INFORMATION : indiquez au Junkie un nombre incorrect d’Informateurs.',
-          'info_only',
-          'Le Junkie croit être Le Blanchisseur. Sa donnée doit être fausse.');
+        if (!isFirstNight) {
+          pushJunkie('blanchisseur',
+            '⚠️ FAUSSE INFORMATION : indiquez au Junkie un nombre incorrect d’Informateurs.',
+            'info_only',
+            'Le Junkie croit être Le Blanchisseur. Sa donnée doit être fausse.');
+        }
         break;
       case 'nettoyeur':
         if (!isFirstNight) {
