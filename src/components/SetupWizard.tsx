@@ -898,26 +898,34 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
           {/* CIRCLE LAYOUT: Around the table */}
           {step2LayoutMode === 'circle' ? (
-            <div className="relative w-full aspect-square max-w-[360px] xs:max-w-[420px] sm:max-w-[500px] md:max-w-[560px] mx-auto my-2 flex items-center justify-center p-2 sm:p-4 bg-stone-950 rounded-3xl border border-stone-800 shadow-2xl overflow-hidden">
-              {/* Table Center Motif */}
+            <div
+              className="relative w-full aspect-[4/5] sm:aspect-square max-w-[430px] mx-auto my-2 rounded-[2rem] border border-amber-950/60 shadow-2xl overflow-visible"
+              style={{
+                backgroundColor: '#2a190f',
+                backgroundImage:
+                  'radial-gradient(circle at 50% 48%, rgba(170,105,45,0.16), transparent 48%), repeating-linear-gradient(88deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 2px, transparent 3px, transparent 15px)',
+              }}
+            >
+              {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border border-stone-800/80 bg-stone-900/60 shadow-inner flex flex-col items-center justify-center p-2 text-center select-none">
-                  <span className="text-[10px] sm:text-xs text-amber-400 font-serif font-black uppercase tracking-wider">
-                    Table de Jeu
+                <div className="w-24 h-24 sm:w-30 sm:h-30 rounded-full bg-stone-950/85 border border-amber-900/50 shadow-inner flex flex-col items-center justify-center p-2 text-center">
+                  <span className="text-[10px] sm:text-xs text-amber-300 font-serif font-black uppercase tracking-wider">
+                    Table de jeu
                   </span>
-                  <span className="text-[8px] sm:text-[9px] text-stone-400 mt-0.5">
+                  <span className="text-[8px] sm:text-[9px] text-stone-400 mt-1">
                     {activePlayersList.length} joueurs
                   </span>
                 </div>
               </div>
 
-              {/* Seated Players in Radial Order */}
+              {/* Role cards snapped around the table. The artwork itself stays untouched;
+                  only the player/camp bubbles are layered over it. */}
               <div className="relative w-full h-full">
                 {activePlayersList.map((playerName, seatIdx) => {
                   const total = activePlayersList.length;
                   const angle = (seatIdx / total) * 2 * Math.PI - Math.PI / 2;
-                  const rx = total > 10 ? 40 : total > 7 ? 38.5 : 37;
-                  const ry = total > 10 ? 39 : total > 7 ? 37.5 : 36;
+                  const rx = total > 12 ? 39 : 38;
+                  const ry = total > 12 ? 35 : 34;
                   const x = 50 + rx * Math.cos(angle);
                   const y = 50 + ry * Math.sin(angle);
 
@@ -931,6 +939,19 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                     draggedSeatIndex !== null &&
                     draggedSeatIndex !== seatIdx;
                   const isSwapSource = swapActiveSeatIndex === seatIdx;
+                  const cardImageUrl = getRoleCardImageUrl(assignedRoleId);
+
+                  const campLabel = isAgent
+                    ? "AGENT"
+                    : roleInfo?.isPerturbateur
+                    ? "PERTURBATEUR"
+                    : "GANG";
+
+                  const campClasses = isAgent
+                    ? "bg-blue-600/95 text-blue-50 border-blue-300/50"
+                    : roleInfo?.isPerturbateur
+                    ? "bg-purple-600/95 text-purple-50 border-purple-300/50"
+                    : "bg-red-700/95 text-red-50 border-red-300/40";
 
                   return (
                     <div
@@ -1003,116 +1024,92 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                             }
                           }
                         }}
-                        className={`group relative touch-none ${
-                          total > 10
-                            ? 'w-[70px] xs:w-[76px] sm:w-24 md:w-28 p-1 sm:p-1.5 rounded-xl'
-                            : total > 7
-                            ? 'w-[76px] xs:w-[82px] sm:w-26 md:w-30 p-1.5 sm:p-2 rounded-2xl'
-                            : 'w-[82px] xs:w-[90px] sm:w-28 md:w-34 p-1.5 sm:p-2 rounded-2xl'
-                        } border-2 text-left transition-all duration-200 shadow-xl cursor-grab active:cursor-grabbing select-none ${
+                        className={`group relative touch-none cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
+                          total > 12
+                            ? 'w-[64px] xs:w-[70px] sm:w-[86px] md:w-[96px]'
+                            : 'w-[78px] xs:w-[84px] sm:w-[100px] md:w-[112px]'
+                        } ${
                           isDragged
-                            ? 'opacity-30 scale-95 border-dashed border-amber-400 ring-2 ring-amber-400/60'
+                            ? 'opacity-30 scale-95'
                             : isSwapSource
-                            ? 'scale-110 ring-4 ring-amber-400 border-amber-400 bg-amber-950 animate-pulse'
+                            ? 'ring-4 ring-amber-400 rounded-2xl animate-pulse'
                             : isDragTarget
-                            ? 'scale-110 ring-4 ring-amber-400 bg-amber-950 border-amber-400'
-                            : 'bg-stone-900 border-stone-800 text-stone-200 hover:border-stone-700 hover:scale-105'
+                            ? 'ring-4 ring-amber-400 rounded-2xl'
+                            : 'hover:scale-105'
                         }`}
                       >
-                        {/* Swap indicator badge on hover drop target or active swap */}
-                        {isDragTarget && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-amber-500 text-stone-950 font-black text-[8px] shadow-lg whitespace-nowrap z-50">
-                            ⇄ Échanger
+                        {/* Player name bubble — does not modify the role-card image */}
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 max-w-[calc(100%+20px)]">
+                          <div className="px-2.5 py-1 rounded-full bg-stone-950/95 border border-stone-600/90 text-white text-[9px] sm:text-[10px] font-black leading-none whitespace-nowrap shadow-lg truncate max-w-[120px]">
+                            {playerName}
                           </div>
-                        )}
-                        {isSwapSource && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-black text-[8px] shadow-lg whitespace-nowrap z-50 animate-bounce">
-                            ⇄ En cours
-                          </div>
-                        )}
+                        </div>
 
-                        {/* Seat Badge & Fausse Piste Target */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] sm:text-[10px] font-mono font-bold text-stone-400">
-                            #{seatIdx + 1}
-                          </span>
+                        {/* The real role card image: role + power stay entirely inside the image */}
+                        <div className="relative w-full aspect-[2/3] flex items-center justify-center">
+                          {cardImageUrl ? (
+                            <img
+                              src={cardImageUrl}
+                              alt={roleInfo?.nom || assignedRoleId}
+                              draggable={false}
+                              className="w-full h-full object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.5)]"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[2/3] rounded-2xl bg-stone-900 border border-stone-700 flex items-center justify-center p-2 text-center">
+                              <span className="text-[9px] font-bold text-stone-300">
+                                {roleInfo?.nom || assignedRoleId}
+                              </span>
+                            </div>
+                          )}
+
                           {isFaussePisteThisSeat && (
-                            <span className="text-xs" title="Fausse Piste (Hacker en jeu)">
+                            <span
+                              className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-stone-950 flex items-center justify-center text-[11px] font-black border-2 border-stone-950 shadow-lg"
+                              title="Fausse Piste (Hacker en jeu)"
+                            >
                               🎯
                             </span>
                           )}
                         </div>
 
-                        {/* Player Name */}
-                        <div className="mt-0.5 truncate">
-                          <span className="font-bold text-[11px] sm:text-xs md:text-sm text-white truncate block">
-                            {playerName}
+                        {/* Camp bubble — one glance, without duplicating role/power text */}
+                        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-30">
+                          <span
+                            className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full border text-[7.5px] sm:text-[8px] font-black tracking-wide shadow-lg whitespace-nowrap ${campClasses}`}
+                          >
+                            {campLabel}
                           </span>
                         </div>
 
-                        {/* Role Name */}
-                        <div className="text-[9px] sm:text-[10px] font-bold mt-0.5 truncate text-stone-300">
-                          {roleInfo?.nom || assignedRoleId}
-                        </div>
+                        {/* Tiny swap handle, kept outside the artwork */}
+                        <button
+                          type="button"
+                          title="Glisser-déposer ou toucher pour échanger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleSwapSeat(seatIdx);
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                            handleSeatTouchStart(seatIdx, e);
+                          }}
+                          onTouchMove={handleSeatTouchMove}
+                          onTouchEnd={handleSeatTouchEnd}
+                          onTouchCancel={handleSeatTouchCancel}
+                          className={`absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border shadow-lg flex items-center justify-center cursor-grab touch-none transition-colors ${
+                            isSwapSource
+                              ? 'bg-amber-400 text-stone-950 border-amber-200'
+                              : 'bg-stone-950/95 text-stone-300 border-stone-600 hover:text-amber-300 hover:border-amber-400'
+                          }`}
+                        >
+                          <Move className="w-3 h-3" />
+                        </button>
 
-                        {/* Category Tag Badge */}
-                        <div className="mt-1">
-                          {isAgent ? (
-                            <span className="inline-block text-[7.5px] sm:text-[8px] font-black px-1.5 py-0.5 rounded bg-blue-900/90 text-blue-200 border border-blue-700/60 uppercase tracking-wide">
-                              Forces de l'ordre
-                            </span>
-                          ) : roleInfo?.isPerturbateur ? (
-                            <span className="inline-block text-[7.5px] sm:text-[8px] font-black px-1.5 py-0.5 rounded bg-purple-900/90 text-purple-200 border border-purple-700/60 uppercase tracking-wide">
-                              Perturbateur
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* Action Icons: Pencil (modify) & Move (drag / swap) */}
-                        <div className="flex items-center justify-between mt-1 pt-0.5 border-t border-white/10">
-                          {/* Modifier (Crayon) */}
-                          <button
-                            type="button"
-                            title="Modifier le rôle (Crayon)"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (swapActiveSeatIndex !== null) {
-                                handleSwapSeats(swapActiveSeatIndex, seatIdx);
-                              } else {
-                                setRolePickerSearch('');
-                                setRolePickerCategory('all');
-                                setRolePickerSeatIndex(seatIdx);
-                              }
-                            }}
-                            className="p-1 rounded-md hover:bg-stone-800 text-stone-400 hover:text-amber-300 transition-colors cursor-pointer"
-                          >
-                            <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          </button>
-
-                          {/* Glisser-déposer / Échanger (Move) */}
-                          <button
-                            type="button"
-                            title="Glisser-déposer ou toucher pour échanger"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleSwapSeat(seatIdx);
-                            }}
-                            onTouchStart={(e) => {
-                              e.stopPropagation();
-                              handleSeatTouchStart(seatIdx, e);
-                            }}
-                            onTouchMove={handleSeatTouchMove}
-                            onTouchEnd={handleSeatTouchEnd}
-                            onTouchCancel={handleSeatTouchCancel}
-                            className={`p-1 rounded-md transition-colors cursor-grab active:cursor-grabbing touch-none ${
-                              isSwapSource
-                                ? 'bg-amber-400 text-stone-950 ring-2 ring-amber-300'
-                                : 'hover:bg-stone-800 text-stone-400 hover:text-amber-300'
-                            }`}
-                          >
-                            <Move className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          </button>
-                        </div>
+                        {isDragTarget && (
+                          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-amber-500 text-stone-950 font-black text-[8px] shadow-lg whitespace-nowrap z-50">
+                            ⇄ Échanger
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
