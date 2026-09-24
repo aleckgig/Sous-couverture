@@ -90,6 +90,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   const [agentActionType, setAgentActionType] = useState<'none' | 'recruit' | 'prison'>('none');
   const [agentActionChosen, setAgentActionChosen] = useState(false);
   const [agentFlowStep, setAgentFlowStep] = useState(0);
+  const [agentBluffShown, setAgentBluffShown] = useState(false);
   const [agentTargetId, setAgentTargetId] = useState<string>('');
   const [recruitmentAcceptedTonight, setRecruitmentAcceptedTonight] = useState<boolean | null>(null);
   const [imprisonedPlayerId, setImprisonedPlayerId] = useState<string | undefined>(undefined);
@@ -121,6 +122,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     setAgentActionType('none');
     setAgentActionChosen(false);
     setAgentFlowStep(0);
+    setAgentBluffShown(false);
     setAgentTargetId('');
     setRecruitmentAcceptedTonight(null);
     setImprisonedPlayerId(undefined);
@@ -145,6 +147,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
   useEffect(() => {
     localStorage.setItem('sc_night_step_index', currentStepIndex.toString());
     setAgentFlowStep(0);
+    setAgentBluffShown(false);
     setAgentActionChosen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
     setNoticeMessage(null);
@@ -423,6 +426,16 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
     // Sub-flow for agent_sous_couverture
     if (currentStep.roleId === 'agent_sous_couverture') {
+      // On the first night, the bluff card is always shown before the Agent chooses an action.
+      // This card is informational only: its power is never added to the night's steps.
+      if (isFirstNight && !agentBluffShown) {
+        if (actingPlayer?.agentBluffRoleId) {
+          setCardModalRoleId(actingPlayer.agentBluffRoleId);
+          setAgentBluffShown(true);
+          return;
+        }
+      }
+
       if (agentFlowStep === 0) {
         if (!agentActionChosen) {
           setValidationModal({
@@ -675,7 +688,33 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 pt-3 pb-2">
         <div className="max-w-md mx-auto space-y-3">
 
-          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && isFirstNight && !agentBluffShown && (
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Première étape — carte bluff</p>
+                <p className="mt-1 text-sm text-stone-700">Montrez à l’Agent sa fausse carte pour qu’il puisse prendre connaissance de ses pouvoirs et bluffer avec ce rôle.</p>
+                <p className="mt-2 text-[10px] text-stone-500">Cette carte n’est pas réellement en jeu et son pouvoir ne sera jamais exécuté.</p>
+              </div>
+              {actingPlayer?.agentBluffRoleId ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCardModalRoleId(actingPlayer.agentBluffRoleId!);
+                    setAgentBluffShown(true);
+                  }}
+                  className="w-full py-4 rounded-xl bg-blue-700 text-white font-black text-sm shadow-sm"
+                >
+                  <Eye className="inline w-5 h-5 mr-2" /> MONTRER LA CARTE BLUFF
+                </button>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 font-bold">
+                  Aucune carte bluff n’a été configurée pour cet Agent.
+                </div>
+              )}
+            </div>
+          )}
+
+          {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 0 && (!isFirstNight || agentBluffShown) && (
             <>
               <p className="text-center text-base sm:text-lg font-medium text-stone-800 mb-3">
                 Que fait-il cette nuit ?
