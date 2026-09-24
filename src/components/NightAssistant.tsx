@@ -799,8 +799,22 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
 
           {!isJunkieStep && currentStep.roleId === 'agent_sous_couverture' && agentFlowStep === 2 && (
             <>
+              {(actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned || isImpairedByChimiste) && (
+                <div className="rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center">
+                  <p className="text-xs font-black uppercase tracking-wide text-red-800">⚠️ Recrutement impossible</p>
+                  <p className="mt-1 text-sm font-black text-red-950">
+                    L’Agent est empoisonné : le recrutement de {agentTarget?.name} a échoué.
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-red-800">
+                    Ne réveillez pas {agentTarget?.name}. Le recrutement ne peut pas avoir lieu cette nuit.
+                  </p>
+                  <p className="mt-2 text-xs font-bold text-red-900">
+                    Vous devez quand même poser la question à l’Agent et noter sa réponse.
+                  </p>
+                </div>
+              )}
               <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                {agentTarget?.name} accepte-t-il de devenir informateur ?
+                Demandez à l’Agent : {agentTarget?.name} accepte-t-il de devenir informateur ?
               </p>
               <div className="space-y-2.5 mt-5">
                 <button
