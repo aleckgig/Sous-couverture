@@ -910,9 +910,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     const isHackerSelected = Object.values(playerRoleMap).includes('hacker');
 
     return (
-      <div className="w-full max-w-6xl mx-auto animate-in fade-in text-stone-800">
+      <div className="w-full max-w-6xl mx-auto min-h-[calc(100dvh-0.5rem)] flex flex-col animate-in fade-in text-stone-800">
         {renderSetupProgress()}
-        <div className="space-y-2 px-1 sm:px-2">
+        <div className="space-y-2 px-1 sm:px-2 flex-1 flex flex-col">
           <div className="pb-2 border-b border-stone-300">
             <h2 className="font-serif font-black text-lg sm:text-2xl text-stone-900 whitespace-nowrap">
               Attribution des rôles
@@ -956,8 +956,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             <div
               className="relative mx-auto my-2 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]"
              style={{
-               width: 'min(100%, 680px, calc(100dvh - 320px))',
-               height: 'min(680px, calc(100dvh - 320px))',
+               width: 'min(100%, 680px, calc(100dvh - 220px))',
+               height: 'min(680px, calc(100dvh - 220px))',
                aspectRatio: '1 / 1',
                backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)"
              }}
@@ -1176,7 +1176,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          <div className="flex justify-end pt-4 pb-3">
+          <div className="flex justify-end pt-4 pb-1 mt-auto">
             <button
               type="button"
               onClick={handleProceedToSecrets}
