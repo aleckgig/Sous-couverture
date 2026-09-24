@@ -913,22 +913,24 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
       <div className="w-full max-w-6xl mx-auto animate-in fade-in text-stone-800">
         {renderSetupProgress()}
         <div className="space-y-2 px-1 sm:px-2">
-          <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-300">
+          <div className="pb-2 border-b border-stone-300">
             <h2 className="font-serif font-black text-lg sm:text-2xl text-stone-900 whitespace-nowrap">
               Attribution des rôles
             </h2>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleRandomizeRoles}
-                className="px-3 py-1.5 rounded-xl bg-[#eee6d8] border border-stone-300 text-stone-700 text-xs font-bold flex items-center gap-1 hover:bg-white cursor-pointer"
-                title="Répartir les rôles aléatoirement"
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-                <span>Aléatoire</span>
-              </button>
-            </div>
+            <p className="mt-1 text-[11px] sm:text-xs text-stone-500">
+              Répartissez les rôles autour de la table. Touchez une carte pour la modifier ou l’échanger.
+            </p>
+          </div>
+          <div className="flex justify-end -mt-1">
+            <button
+              type="button"
+              onClick={handleRandomizeRoles}
+              className="px-3 py-1.5 rounded-xl bg-[#eee6d8] border border-stone-300 text-stone-700 text-xs font-bold flex items-center gap-1 hover:bg-white cursor-pointer"
+              title="Répartir les rôles aléatoirement"
+            >
+              <Shuffle className="w-3.5 h-3.5" />
+              <span>Aléatoire</span>
+            </button>
           </div>
 
           {/* Active Swap Selection Banner */}
@@ -952,7 +954,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
           {/* CIRCLE LAYOUT: Around the table */}
             <div
-              className="relative w-full aspect-square max-w-[680px] mx-auto my-0 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]" style={{ backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)" }}
+              className="relative mx-auto my-2 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]"
+             style={{
+               width: 'min(100%, 680px, calc(100dvh - 320px))',
+               height: 'min(680px, calc(100dvh - 320px))',
+               aspectRatio: '1 / 1',
+               backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)"
+             }}
             >
               {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
@@ -972,8 +980,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 {activePlayersList.map((playerName, seatIdx) => {
                   const total = activePlayersList.length;
                   const angle = (seatIdx / total) * 2 * Math.PI - Math.PI / 2;
-                  const rx = total > 12 ? 42 : 43;
-                  const ry = total > 12 ? 41 : 43;
+                  const rx = total > 12 ? 38 : 39;
+                  const ry = total > 12 ? 37 : 38;
                   const x = 50 + rx * Math.cos(angle);
                   const y = 50 + ry * Math.sin(angle);
 
@@ -1168,7 +1176,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-end pt-4 pb-3">
             <button
               type="button"
               onClick={handleProceedToSecrets}
