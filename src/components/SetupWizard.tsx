@@ -933,8 +933,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             </button>
           </div>
 
-          </div>
-
           {/* Active Swap Selection Banner */}
           {swapActiveSeatIndex !== null && (
             <div className="flex items-center justify-between bg-[#ebe2d3] border border-stone-400 rounded-2xl px-3.5 py-2.5 text-stone-700 shadow-sm animate-pulse">
