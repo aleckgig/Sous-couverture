@@ -499,6 +499,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       });
       return;
     }
+    if (currentStep.roleId === 'chimiste' && chimisteTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ Le Chimiste est empoisonné : son pouvoir échoue silencieusement.');
+      } else {
+        const target = players.find((p) => p.id === chimisteTargetId);
+        if (target) onUpdatePlayer({ ...target, isPoisoned: true, isInformationPoisoned: true });
+      }
+    }
     if (currentStep.roleId === 'apprenti' && !apprentiTargetId) {
       setValidationModal({
         isOpen: true,
@@ -507,6 +515,13 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
       });
       return;
     }
+    if (currentStep.roleId === 'apprenti' && apprentiTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ L’Apprenti est empoisonné : son pouvoir échoue silencieusement.');
+      } else if (actingPlayer) {
+        onUpdatePlayer({ ...actingPlayer, linkedVoteTargetId: apprentiTargetId });
+      }
+    }
     if (currentStep.roleId === 'avocat_vereux' && !avocateTargetId) {
       setValidationModal({
         isOpen: true,
@@ -514,6 +529,14 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         message: 'Sélectionnez le joueur à protéger contre la prison.',
       });
       return;
+    }
+    if (currentStep.roleId === 'avocat_vereux' && avocateTargetId) {
+      if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+        setNoticeMessage('⚠️ L’Avocate est empoisonnée : la protection échoue silencieusement.');
+      } else {
+        const target = players.find((p) => p.id === avocateTargetId);
+        if (target) onUpdatePlayer({ ...target, isProtected: true });
+      }
     }
     if (currentStep.roleId === 'hacker' && (!hackerTargetOneId || !hackerTargetTwoId)) {
       setValidationModal({
