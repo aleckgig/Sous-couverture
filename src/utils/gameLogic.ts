@@ -44,7 +44,7 @@ export function getPickpocketForcesDeLOrdreCount(
   const neighbors = getLivingNeighbors(players, pickpocketPlayer.seatNumber);
   const count = neighbors.filter(n => {
     const realForces = n.currentTeam === 'Forces de l\'ordre';
-    return (n.roleId === 'arnaqueuse' || n.perceivedRoleId === 'arnaqueuse') ? !realForces : realForces;
+    return !n.isInformateur && (n.roleId === 'arnaqueuse' || n.perceivedRoleId === 'arnaqueuse') ? !realForces : realForces;
   }).length;
   return { count, neighbors };
 }
@@ -79,7 +79,7 @@ export function generateNightSteps(
   }
 ): NightStep[] {
   const steps: NightStep[] = [];
-  const active = (roleId: RoleId) => players.find(p => p.roleId === roleId && p.isAlive && !p.isPrisoner);
+  const active = (roleId: RoleId) => players.find(p => p.roleId === roleId && p.isAlive && !p.isPrisoner && !p.isInformateur);
 
   const push = (roleId: RoleId, order: number, title: string, instruction: string, actionType: NightStep['actionType'], reminder?: string) => {
     const p = active(roleId);
@@ -125,7 +125,7 @@ export function generateNightSteps(
   // The Junkie performs the nightly action of the role shown on their false card.
   // Their real role remains "Junkie"; only the simulated power is used here.
   const junkie = players.find(p =>
-    p.roleId === 'junkie' && p.isAlive && !p.isPrisoner && p.perceivedRoleId && p.perceivedRoleId !== 'junkie'
+    p.roleId === 'junkie' && p.isAlive && !p.isPrisoner && !p.isInformateur && p.perceivedRoleId && p.perceivedRoleId !== 'junkie'
   );
   const perceived = junkie?.perceivedRoleId ? ROLES[junkie.perceivedRoleId] : undefined;
 
@@ -230,7 +230,7 @@ export function generateNightSteps(
 export function checkVictory(players: Player[], lastExecutionPlayerId?: string): { winner: 'Gang' | 'Forces de l\'ordre'; reason: string } | null {
   if (lastExecutionPlayerId) {
     const executed = players.find(p => p.id === lastExecutionPlayerId);
-    if (executed?.roleId === 'caid' || executed?.perceivedRoleId === 'caid') {
+    if (!executed?.isInformateur && (executed?.roleId === 'caid' || executed?.perceivedRoleId === 'caid')) {
       return { winner: 'Forces de l\'ordre', reason: 'Le Caïd a été exécuté par vote. Le Gang perd immédiatement.' };
     }
   }

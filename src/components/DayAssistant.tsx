@@ -142,10 +142,10 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
   const prisoners = livingPlayers.filter((p) => p.isPrisoner);
   const imprisonedTonight = players.find((p) => p.id === lastNightImprisonedPlayerId);
 
-  const tueurPlayer = players.find((p) => p.roleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
-  const gardePlayer = players.find((p) => p.roleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
-  const junkieTueurPlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner);
-  const junkieGardePlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner);
+  const tueurPlayer = players.find((p) => p.roleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner && !p.isInformateur);
+  const gardePlayer = players.find((p) => p.roleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner && !p.isInformateur);
+  const junkieTueurPlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'tueur_a_gages' && p.isAlive && !p.isPrisoner && !p.isInformateur);
+  const junkieGardePlayer = players.find(p => p.roleId === 'junkie' && p.perceivedRoleId === 'garde_du_corps' && p.isAlive && !p.isPrisoner && !p.isInformateur);
 
   const handleConfirmExecution = (playerId: string) => {
     const p = players.find((pl) => pl.id === playerId);
@@ -513,7 +513,7 @@ export const DayAssistant: React.FC<DayAssistantProps> = ({
 
             {selectedExecuteId && (
               <div className="pt-2">
-                {players.find((p) => p.id === selectedExecuteId)?.roleId === 'caid' && (
+                {players.find((p) => p.id === selectedExecuteId && !p.isInformateur)?.roleId === 'caid' && (
                   <div className="p-3 bg-red-950 border-2 border-red-500 rounded-2xl mb-3 text-xs text-red-200 flex items-start gap-2.5">
                     <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                     <div>
