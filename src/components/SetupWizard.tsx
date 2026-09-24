@@ -238,16 +238,16 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
       ([sIdx, rId]) => Number(sIdx) !== targetSeatIndex && rId === newRoleId
     );
 
-    setPlayerRoleMap((prev) => {
-      const updated = { ...prev, [targetSeatIndex]: newRoleId };
-      if (existingOtherSeatEntry) {
-        const otherSeatIndex = Number(existingOtherSeatEntry[0]);
-        if (currentRoleId) {
-          updated[otherSeatIndex] = currentRoleId;
-        }
-      }
-      return updated;
-    });
+    if (existingOtherSeatEntry) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Rôle déjà sélectionné',
+        message: `${ROLES[newRoleId]?.nom ?? newRoleId} est déjà attribué à ${activePlayersList[Number(existingOtherSeatEntry[0])]}. Chaque rôle ne peut être sélectionné qu’une seule fois dans une partie.`,
+      });
+      return;
+    }
+
+    setPlayerRoleMap((prev) => ({ ...prev, [targetSeatIndex]: newRoleId }));
 
     setRolePickerSeatIndex(null);
   };
@@ -469,7 +469,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   };
 
   const junkieSeatIndex = Object.entries(playerRoleMap).find(([, roleId]) => roleId === 'junkie')?.[0];
-  const junkieRoleOptions = Object.values(ROLES).filter((r) => r.id !== 'junkie');
+  const assignedRoleIds = new Set(Object.values(playerRoleMap) as RoleId[]);
+  const junkieRoleOptions = Object.values(ROLES).filter(
+    (r) => r.id !== 'junkie' && !assignedRoleIds.has(r.id)
+  );
 
   useEffect(() => {
     if (junkieSeatIndex === undefined) {
@@ -479,11 +482,32 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
   const handleLaunchGame = async () => {
     const hasJunkie = Object.values(playerRoleMap).includes('junkie');
+    const assignedRolesList = Object.values(playerRoleMap) as RoleId[];
+    const duplicateRoles = assignedRolesList.filter((roleId, index) => assignedRolesList.indexOf(roleId) !== index);
+    if (duplicateRoles.length > 0) {
+      const duplicateNames = Array.from(new Set(duplicateRoles)).map((roleId) => ROLES[roleId]?.nom ?? roleId).join(', ');
+      setValidationModal({
+        isOpen: true,
+        title: 'Rôles en double',
+        message: `Impossible de lancer la partie : les rôles suivants sont sélectionnés plus d’une fois : ${duplicateNames}.`,
+      });
+      return;
+    }
+
     if (hasJunkie && !junkiePerceivedRoleId) {
       setValidationModal({
         isOpen: true,
         title: 'Fausse carte du Junkie requise',
         message: 'Choisissez la carte de rôle que le Junkie recevra et croira être son rôle.',
+      });
+      return;
+    }
+
+    if (hasJunkie && assignedRolesList.includes(junkiePerceivedRoleId as RoleId)) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Rôle déjà sélectionné',
+        message: `${ROLES[junkiePerceivedRoleId as RoleId]?.nom ?? junkiePerceivedRoleId} est déjà utilisé dans cette partie. La fausse carte du Junkie doit être un rôle non sélectionné.`,
       });
       return;
     }
