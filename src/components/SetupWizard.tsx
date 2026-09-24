@@ -1061,7 +1061,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                             : isSwapSource
                             ? 'ring-4 ring-stone-500 rounded-2xl animate-pulse'
                             : isDragTarget
-                            ? 'ring-4 ring-amber-400 rounded-2xl'
+                            ? 'ring-4 ring-stone-500 rounded-2xl'
                             : 'hover:scale-105'
                         }`}
                       >
@@ -1143,18 +1143,18 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          <div className="pt-3 border-t border-stone-800 flex items-center justify-between">
+          <div className="pt-2 border-t border-stone-300 flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-4 py-2 rounded-xl bg-stone-800 text-xs font-bold cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#e2ded5] hover:bg-[#d8d3c8] border border-stone-300 text-stone-600 font-bold text-xs cursor-pointer"
             >
               ← Retour
             </button>
             <button
               type="button"
               onClick={handleProceedToSecrets}
-              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-lg"
+              className="px-5 py-2.5 rounded-2xl bg-[#b8aa91] hover:bg-[#aa9b82] border border-[#9d907a] text-stone-900 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <span>Configurations spéciales</span>
               <ArrowRight className="w-4 h-4" />
@@ -1179,7 +1179,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 ⇄ Échanger
               </span>
             </div>
-            <div className="font-bold text-xs text-white truncate mt-1">
+            <div className="font-bold text-xs text-stone-900 truncate mt-1">
               {activePlayersList[draggedSeatIndex]}
             </div>
             <div className="text-[10px] font-bold text-stone-700 truncate">
