@@ -115,6 +115,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
   const [faussePisteSeatIndex, setFaussePisteSeatIndex] = useState<number>(0);
   const [junkiePerceivedRoleId, setJunkiePerceivedRoleId] = useState<RoleId | ''>('');
+  const [agentBluffRoleId, setAgentBluffRoleId] = useState<RoleId | ''>('');
 
   const [isImageManagerOpen, setIsImageManagerOpen] = useState<boolean>(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState<boolean>(false);
@@ -469,9 +470,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   };
 
   const junkieSeatIndex = Object.entries(playerRoleMap).find(([, roleId]) => roleId === 'junkie')?.[0];
+  const agentSeatIndex = Object.entries(playerRoleMap).find(([, roleId]) => roleId === 'agent_sous_couverture')?.[0];
   const assignedRoleIds = new Set(Object.values(playerRoleMap) as RoleId[]);
   const junkieRoleOptions = Object.values(ROLES).filter(
     (r) => r.id !== 'junkie' && !assignedRoleIds.has(r.id)
+  );
+  const agentBluffRoleOptions = Object.values(ROLES).filter(
+    (r) => !assignedRoleIds.has(r.id)
   );
 
   useEffect(() => {
@@ -503,6 +508,24 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
       return;
     }
 
+    if (agentSeatIndex !== undefined && !agentBluffRoleId) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Fausse carte de l’Agent requise',
+        message: 'Choisissez la carte de rôle que l’Agent sous couverture recevra comme bluff pour la première nuit.',
+      });
+      return;
+    }
+
+    if (agentSeatIndex !== undefined && assignedRolesList.includes(agentBluffRoleId as RoleId)) {
+      setValidationModal({
+        isOpen: true,
+        title: 'Rôle déjà sélectionné',
+        message: `${ROLES[agentBluffRoleId as RoleId]?.nom ?? agentBluffRoleId} est déjà utilisé dans cette partie. La fausse carte de l’Agent doit être un rôle non sélectionné.`,
+      });
+      return;
+    }
+
     if (hasJunkie && assignedRolesList.includes(junkiePerceivedRoleId as RoleId)) {
       setValidationModal({
         isOpen: true,
@@ -529,6 +552,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           isProtected: false,
           isFaussePiste: idx === faussePisteSeatIndex,
           ...(rId === 'junkie' && junkiePerceivedRoleId ? { perceivedRoleId: junkiePerceivedRoleId } : {}),
+          ...(rId === 'agent_sous_couverture' && agentBluffRoleId ? { agentBluffRoleId } : {}),
         };
       });
     } else {
@@ -546,6 +570,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           isProtected: false,
           isFaussePiste: idx === faussePisteSeatIndex,
           ...(assignedRole === 'junkie' && junkiePerceivedRoleId ? { perceivedRoleId: junkiePerceivedRoleId } : {}),
+          ...(assignedRole === 'agent_sous_couverture' && agentBluffRoleId ? { agentBluffRoleId } : {}),
         };
       });
     }
@@ -1595,6 +1620,41 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 className="w-full py-3 rounded-xl bg-stone-900 border border-purple-400/40 text-purple-200 font-black text-xs"
               >
                 Voir la carte à montrer au Junkie
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Agent sous couverture bluff card */}
+        {agentSeatIndex !== undefined && (
+          <div className="bg-blue-950/30 p-4 rounded-2xl border border-blue-500/30 space-y-2.5">
+            <div>
+              <div className="text-[10px] uppercase tracking-widest font-black text-blue-300">
+                Configuration de l’Agent sous couverture
+              </div>
+              <p className="text-xs text-stone-400 mt-1">
+                <strong className="text-stone-200">Carte réelle : Agent sous couverture.</strong> Choisissez une fausse carte qu’il recevra à son réveil lors de la première nuit pour connaître ses pouvoirs et pouvoir bluffer avec ce rôle. Les pouvoirs de cette carte ne sont jamais actifs dans la partie.
+              </p>
+            </div>
+            <select
+              value={agentBluffRoleId}
+              onChange={(e) => setAgentBluffRoleId(e.target.value as RoleId)}
+              className="w-full bg-stone-900 border border-blue-400/40 rounded-xl px-3 py-3 text-sm text-white outline-none"
+            >
+              <option value="">Choisir la fausse carte…</option>
+              {agentBluffRoleOptions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nom}
+                </option>
+              ))}
+            </select>
+            {agentBluffRoleId && (
+              <button
+                type="button"
+                onClick={() => setPreviewCardRoleId(agentBluffRoleId)}
+                className="w-full py-3 rounded-xl bg-stone-900 border border-blue-400/40 text-blue-200 font-black text-xs"
+              >
+                Voir la carte à montrer à l’Agent
               </button>
             )}
           </div>
