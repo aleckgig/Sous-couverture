@@ -306,7 +306,7 @@ export default function App() {
       isPoisoned: false,
     }));
 
-    const chimiste = players.find(p => p.roleId === 'chimiste' && p.isAlive && !p.isPrisoner);
+    const chimiste = players.find(p => p.roleId === 'chimiste' && p.isAlive && !p.isPrisoner && !p.isInformateur);
     const chimistePoisoned = !!(chimiste && summary?.chimisteTargetId === chimiste.id);
     if (summary?.chimisteTargetId && !chimistePoisoned) {
       updatedPlayers = updatedPlayers.map(p =>
@@ -319,7 +319,7 @@ export default function App() {
     // Resolve the Junkie's simulated role early enough for its real effects to
     // influence later night actions (e.g. a simulated Chimiste can poison the Agent,
     // and a simulated Avocate can protect someone from the Agent's arrest).
-    const junkie = players.find(p => p.roleId === 'junkie' && p.isAlive && !p.isPrisoner);
+    const junkie = players.find(p => p.roleId === 'junkie' && p.isAlive && !p.isPrisoner && !p.isInformateur);
     const junkieAction = summary?.junkieAction;
     const junkiePoisoned = !!(junkie && (
       summary?.chimisteTargetId === junkie.id ||
@@ -347,7 +347,7 @@ export default function App() {
     }
 
     if (summary?.apprentiTargetId) {
-      const apprenti = players.find(p => p.roleId === 'apprenti' && p.isAlive && !p.isPrisoner);
+      const apprenti = players.find(p => p.roleId === 'apprenti' && p.isAlive && !p.isPrisoner && !p.isInformateur);
       if (apprenti && !apprenti.isInformationPoisoned && !apprenti.isPoisoned) {
         updatedPlayers = updatedPlayers.map(p =>
           p.id === apprenti.id ? { ...p, linkedVoteTargetId: summary.apprentiTargetId } : p
@@ -355,7 +355,7 @@ export default function App() {
       }
     }
 
-    const agent = players.find(p => p.roleId === 'agent_sous_couverture' && p.isAlive && !p.isPrisoner);
+    const agent = players.find(p => p.roleId === 'agent_sous_couverture' && p.isAlive && !p.isPrisoner && !p.isInformateur);
     const agentPoisoned = !!(agent && (
       agent.isInformationPoisoned ||
       agent.isPoisoned ||
@@ -379,7 +379,7 @@ export default function App() {
     if (prisonTargetId && agent && !agentPoisoned) {
       const prisonTarget = players.find(p => p.id === prisonTargetId);
       const avocateTargetId = summary?.avocateTargetId;
-      const avocate = players.find(p => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner);
+      const avocate = players.find(p => p.roleId === 'avocat_vereux' && p.isAlive && !p.isPrisoner && !p.isInformateur);
       const avocatePoisoned = !!(avocate && (
         avocate.isInformationPoisoned ||
         avocate.isPoisoned ||
@@ -390,7 +390,7 @@ export default function App() {
       const protectedByJunkieAvocate = junkieAction?.perceivedRoleId === 'avocat_vereux' &&
         !junkiePoisoned &&
         junkieAction.avocateTargetId === prisonTargetId;
-      const targetIsChauffeur = prisonTarget.roleId === 'chauffeur' || prisonTarget.perceivedRoleId === 'chauffeur';
+      const targetIsChauffeur = !prisonTarget.isInformateur && (prisonTarget.roleId === 'chauffeur' || prisonTarget.perceivedRoleId === 'chauffeur');
       const validTarget = prisonTarget &&
         prisonTarget.isAlive &&
         !prisonTarget.isPrisoner &&
@@ -530,7 +530,7 @@ export default function App() {
   const handleTriggerTueurShot = (tueurPlayerId: string, targetPlayerId: string): boolean => {
     const tueur = players.find(p => p.id === tueurPlayerId);
     const target = players.find(p => p.id === targetPlayerId);
-    if (!tueur || !target || !tueur.isAlive || tueur.isPrisoner || tueur.hasUsedTueurAGages) return false;
+    if (!tueur || !target || !tueur.isAlive || tueur.isPrisoner || tueur.isInformateur || tueur.hasUsedTueurAGages) return false;
     if (!target.isAlive || target.isPrisoner) return false;
     if (tueur.isInformationPoisoned || tueur.isPoisoned) {
       addLog(`⚠️ Le Tueur à gages était empoisonné : son tir sur ${target.name} échoue.`, 'info');
