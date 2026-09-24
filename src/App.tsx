@@ -515,7 +515,7 @@ export default function App() {
 
   return (
     <div className="min-h-dvh bg-[#f5f1e8] text-stone-900 flex flex-col font-sans antialiased selection:bg-amber-200 selection:text-stone-950">
-      {/* Header */}
+      {gamePhase !== 'setup_player_count' && gamePhase !== 'setup_roles' && gamePhase !== 'setup_players' && (
       <Header
         gamePhase={gamePhase}
         gameMode={gameMode}
@@ -540,9 +540,10 @@ export default function App() {
         livingCount={livingCount}
         totalCount={players.length}
       />
+      )}
 
       {/* Main Content View Container */}
-      <main className={`flex-1 w-full mx-auto px-3 sm:px-4 ${gamePhase === "night" || gamePhase === "day" ? "max-w-2xl py-2 overflow-hidden h-[calc(100dvh-57px)]" : "max-w-7xl py-3 md:py-6"}`}>
+      <main className={`flex-1 w-full mx-auto px-2 sm:px-4 ${gamePhase === "night" || gamePhase === "day" ? "max-w-2xl py-2 overflow-hidden h-[calc(100dvh-57px)]" : (gamePhase === 'setup_player_count' || gamePhase === 'setup_roles' || gamePhase === 'setup_players' ? "max-w-7xl py-1 md:py-3" : "max-w-7xl py-3 md:py-6")}`}>
         {/* Setup Phase */}
         {(gamePhase === 'setup_player_count' ||
           gamePhase === 'setup_roles' ||
