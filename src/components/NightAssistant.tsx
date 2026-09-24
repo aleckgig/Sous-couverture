@@ -1172,7 +1172,8 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           {noticeMessage && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">{noticeMessage}</div>
           )}
-
+        </>
+      )}
 
         </div>
       </div>
