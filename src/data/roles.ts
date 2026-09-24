@@ -69,7 +69,7 @@ export const ROLES: Record<RoleId, StructuredRole> = {
   nettoyeur: role('nettoyeur', 'La Nettoyeuse', 'Gang',
     'Chaque nuit, sauf la première, apprend le rôle exact de la personne exécutée par vote durant la journée précédente.',
     'information', 'chaque_nuit_sauf_premiere', 'Dernier exécuté par vote', 'À partir de la Nuit 2', false,
-    { eachNightOrder: 50,
+    { firstNightOrder: 0, eachNightOrder: 50,
       eachNightInstruction: 'Montrez la carte du rôle de la personne exécutée par vote durant la journée précédente, ou indiquez qu\'il n\'y a eu aucune exécution.' }),
   pickpocket: role('pickpocket', 'Le Pickpocket', 'Gang',
     'Chaque nuit, apprend combien de ses 2 voisins les plus proches appartiennent aux Forces de l’ordre.',
