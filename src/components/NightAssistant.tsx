@@ -811,12 +811,12 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                     Ne réveillez pas {agentTarget?.name}. Le recrutement ne peut pas avoir lieu cette nuit.
                   </p>
                   <p className="mt-2 text-xs font-bold text-red-900">
-                    Vous devez quand même poser la question à l’Agent et noter sa réponse.
+                    Ne demandez pas de réponse à l’Agent : le recrutement a déjà échoué.
                   </p>
                 </div>
               )}
-              <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                Demandez à l’Agent : {agentTarget?.name} accepte-t-il de devenir informateur ?
+              <p className="text-center text-base sm:text-lg font-black text-stone-800">
+                Réponse de {agentTarget?.name}
               </p>
               <div className="space-y-2.5 mt-5">
                 <button
