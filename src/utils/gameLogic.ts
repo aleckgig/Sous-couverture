@@ -9,7 +9,7 @@ export interface GameComposition {
 
 export function getStandardComposition(playerCount: number): GameComposition {
   const count = Math.max(5, Math.min(17, playerCount));
-  const perturbateurs = count <= 5 ? 1 : count <= 6 ? 2 : count <= 10 ? 3 : count <= 13 ? 4 : 5;
+  const perturbateurs = count <= 8 ? 1 : 2;
   return { agent: 1, gangStandard: count - 1 - perturbateurs, perturbateurs };
 }
 
