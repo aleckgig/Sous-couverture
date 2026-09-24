@@ -982,8 +982,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 {activePlayersList.map((playerName, seatIdx) => {
                   const total = activePlayersList.length;
                   const angle = (seatIdx / total) * 2 * Math.PI - Math.PI / 2;
-                  const rx = total > 12 ? 42 : 43;
-                  const ry = total > 12 ? 41 : 43;
+                  const rx = total > 12 ? 38 : 39;
+                  const ry = total > 12 ? 37 : 38;
                   const x = 50 + rx * Math.cos(angle);
                   const y = 50 + ry * Math.sin(angle);
 
@@ -1178,7 +1178,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-end pt-4 pb-3">
             <button
               type="button"
               onClick={handleProceedToSecrets}
