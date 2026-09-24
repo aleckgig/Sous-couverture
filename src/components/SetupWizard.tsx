@@ -116,6 +116,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   const [faussePisteSeatIndex, setFaussePisteSeatIndex] = useState<number>(0);
   const [junkiePerceivedRoleId, setJunkiePerceivedRoleId] = useState<RoleId | ''>('');
   const [agentBluffRoleId, setAgentBluffRoleId] = useState<RoleId | ''>('');
+  const [localRoleImages, setLocalRoleImages] = useState<Record<string, string>>({});
 
   const [isImageManagerOpen, setIsImageManagerOpen] = useState<boolean>(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState<boolean>(false);
@@ -128,6 +129,23 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     isOpen: false,
     message: '',
   });
+
+  // Load the same custom role-card images used by RoleCardModal.
+  // This keeps the table view visually tied to the actual cards without editing the artwork.
+  useEffect(() => {
+    let active = true;
+    getAllLocalRoleImages().then((items) => {
+      if (!active) return;
+      const next: Record<string, string> = {};
+      items.forEach((item) => {
+        next[item.roleId.toLowerCase().trim()] = item.dataUrl;
+      });
+      setLocalRoleImages(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Auto-save physical roster
   useEffect(() => {
@@ -908,7 +926,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             >
               {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <div className="w-24 h-24 sm:w-30 sm:h-30 rounded-full bg-stone-950/85 border border-amber-900/50 shadow-inner flex flex-col items-center justify-center p-2 text-center">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-stone-950/85 border border-amber-900/50 shadow-inner flex flex-col items-center justify-center p-2 text-center">
                   <span className="text-[10px] sm:text-xs text-amber-300 font-serif font-black uppercase tracking-wider">
                     Table de jeu
                   </span>
@@ -939,7 +957,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                     draggedSeatIndex !== null &&
                     draggedSeatIndex !== seatIdx;
                   const isSwapSource = swapActiveSeatIndex === seatIdx;
-                  const cardImageUrl = getRoleCardImageUrl(assignedRoleId);
+                  const cardImageUrl = localRoleImages[assignedRoleId.toLowerCase()] || getRoleCardImageUrl(assignedRoleId);
 
                   const campLabel = isAgent
                     ? "AGENT"
