@@ -221,7 +221,7 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
     const reminder = currentStep.reminder ?? '';
 
     if (currentStep.roleId === 'trafiquant') {
-      const trueValue = reminder.startsWith('OUI') ? 'OUI' : 'NON';
+      const trueValue = recruitmentAcceptedTonight === true ? 'OUI' : 'NON';
       return {
         normal: trueValue,
         toSay: trueValue === 'OUI' ? 'NON' : 'OUI',
@@ -431,15 +431,19 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
         }
         if (agentActionType === 'prison') {
           const target = players.find((p) => p.id === agentTargetId);
-          if (isImpairedByChimiste) {
+          if (isImpairedByChimiste || actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
             setNoticeMessage('L’Agent est empoisonné : son arrestation échouera silencieusement.');
             setImprisonedPlayerId(undefined);
-          } else if (target?.roleId === 'chauffeur') {
+          } else if (target?.roleId === 'chauffeur' || target?.perceivedRoleId === 'chauffeur') {
             setNoticeMessage(`Le Chauffeur (${target.name}) est immunisé contre la prison.`);
             setImprisonedPlayerId(undefined);
+          } else if (target?.isProtected) {
+            setNoticeMessage(`L’Avocate protège ${target.name} : l’arrestation échoue cette nuit.`);
+            setImprisonedPlayerId(undefined);
           } else if (target) {
-            setNoticeMessage(`${target.name} sera envoyé en prison.`);
+            setNoticeMessage(`${target.name} est envoyé en prison immédiatement.`);
             setImprisonedPlayerId(target.id);
+            onUpdatePlayer({ ...target, isPrisoner: true });
           }
           setAgentFlowStep(3);
           return;
@@ -454,6 +458,15 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           }
           setAgentFlowStep(3);
           return;
+        }
+        if (recruitmentAcceptedTonight === true) {
+          if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned || isImpairedByChimiste) {
+            setNoticeMessage('⚠️ L’Agent est empoisonné : le recrutement échoue silencieusement.');
+            setRecruitmentAcceptedTonight(false);
+          } else if (agentTarget && !agentTarget.isInformateur && agentTarget.currentTeam === 'Gang' && getInformantsCount(players) < 2) {
+            onUpdatePlayer({ ...agentTarget, isInformateur: true, currentTeam: 'Forces de l’ordre' });
+            setNoticeMessage(`${agentTarget.name} devient Informateur immédiatement.`);
+          }
         }
         if (recruitmentAcceptedTonight === null) {
           setValidationModal({
