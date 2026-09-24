@@ -79,6 +79,7 @@ export interface Player {
   seatNumber: number;
   roleId: RoleId;
   perceivedRoleId?: RoleId; // For Junkie who thinks they are another role
+  agentBluffRoleId?: RoleId; // Role card shown to the Agent as a bluff on the first night; never an active role
   currentTeam: Team; // 'Gang' or 'Forces de l\'ordre' (Informateur or Agent)
   isInformateur: boolean; // Recruited gang member
   isPrisoner: boolean; // Currently in prison
