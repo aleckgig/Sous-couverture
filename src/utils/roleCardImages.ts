@@ -103,15 +103,9 @@ export function getRoleCardImageUrl(roleId: string): string | null {
     return matchedByName.url;
   }
 
-  // 3. Check if role has an explicit cardImage/image property
-  if (roleObj?.image) {
-    return roleObj.image;
-  }
-  if ((roleObj as any)?.cardImage) {
-    return (roleObj as any).cardImage;
-  }
-
-  // 4. Fallback to public images
+  // 3. Public/server images are the canonical source for role cards.
+  // Vite does not bundle files from /public through import.meta.glob(), so the
+  // public URL must be resolved explicitly instead of relying on the glob.
   if (roleId === 'revendeur_armes') {
     return '/images/Revendeur d armes.png';
   }
@@ -120,6 +114,14 @@ export function getRoleCardImageUrl(roleId: string): string | null {
   }
   if (defaultMappedFile) {
     return `/images/${defaultMappedFile}`;
+  }
+
+  // 4. Last-resort role metadata fallback.
+  if (roleObj?.image) {
+    return roleObj.image;
+  }
+  if ((roleObj as any)?.cardImage) {
+    return (roleObj as any).cardImage;
   }
 
   return null;

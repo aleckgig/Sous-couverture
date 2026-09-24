@@ -37,7 +37,7 @@ import { ValidationAlertModal } from './ValidationAlertModal';
 import { ImageManagerModal } from './ImageManagerModal';
 import { RulesValidationModal } from './RulesValidationModal';
 import { getRoleCardImageUrl } from '../utils/roleCardImages';
-import { getAllLocalRoleImages } from '../utils/cardStorage';
+import { getAllLocalRoleImages, getLookupKeys } from '../utils/cardStorage';
 import {
   generateBalancedSousCouvertureRoles,
   getRecommendedGangComposition,
@@ -137,14 +137,50 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   // This keeps the table view visually tied to the actual cards without editing the artwork.
   useEffect(() => {
     let active = true;
-    getAllLocalRoleImages().then((items) => {
-      if (!active) return;
+
+    const loadRoleImages = async () => {
       const next: Record<string, string> = {};
-      items.forEach((item) => {
-        next[item.roleId.toLowerCase().trim()] = item.dataUrl;
-      });
-      setLocalRoleImages(next);
-    });
+
+      // 1. Reuse the same browser-stored custom images as the role-card modal.
+      try {
+        const items = await getAllLocalRoleImages();
+        for (const item of items) {
+          for (const key of getLookupKeys(item.roleId)) {
+            next[key.toLowerCase().trim()] = item.dataUrl;
+          }
+        }
+      } catch {
+        // Continue with server/default images.
+      }
+
+      // 2. If browser storage is unavailable/empty, recover images already stored by the server.
+      try {
+        const res = await fetch('/api/images/status');
+        if (res.ok) {
+          const data = await res.json();
+          const rolesStatus = data?.rolesStatus || {};
+          for (const [roleId, status] of Object.entries(rolesStatus) as Array<
+            [string, { url?: string }]
+          >) {
+            if (status?.url) {
+              for (const key of getLookupKeys(roleId)) {
+                const normalizedKey = key.toLowerCase().trim();
+                if (!next[normalizedKey]) {
+                  next[normalizedKey] = status.url;
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Continue with bundled/public fallback.
+      }
+
+      if (active) setLocalRoleImages(next);
+    };
+
+    loadRoleImages();
+
     return () => {
       active = false;
     };
