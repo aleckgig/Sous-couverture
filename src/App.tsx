@@ -621,7 +621,8 @@ export default function App() {
           )}
       </main>
 
-      {gamePhase !== "night" && gamePhase !== "day" && (
+      {gamePhase !== "night" && gamePhase !== "day" &&
+        gamePhase !== "setup_player_count" && gamePhase !== "setup_roles" && gamePhase !== "setup_players" && (
         <footer className="border-t border-stone-200 bg-[#f0ece2] py-3 text-center text-[10px] text-stone-400">
           Sous Couverture • Jeu de déduction sociale
         </footer>
