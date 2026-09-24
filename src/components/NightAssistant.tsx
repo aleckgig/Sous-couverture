@@ -334,11 +334,18 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
           }
           if (junkieAgentActionType === 'prison') {
             const target = players.find((p) => p.id === junkieAgentTargetId);
-            if (target?.roleId === 'chauffeur' || target?.isInformateur || target?.roleId === 'agent_sous_couverture') {
+            if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
               setJunkieImprisonedPlayerId(undefined);
-              setNoticeMessage('Le Junkie croit avoir réussi son arrestation. L’effet sera traité selon les règles de son pouvoir.');
-            } else {
-              setJunkieImprisonedPlayerId(target?.id);
+              setNoticeMessage('⚠️ Le Junkie est empoisonné : son pouvoir d’Agent échoue silencieusement.');
+            } else if (target?.roleId === 'chauffeur' || target?.perceivedRoleId === 'chauffeur' || target?.isInformateur || target?.roleId === 'agent_sous_couverture') {
+              setJunkieImprisonedPlayerId(undefined);
+              setNoticeMessage('L’arrestation simulée échoue selon les règles du pouvoir.');
+            } else if (target?.isProtected) {
+              setJunkieImprisonedPlayerId(undefined);
+              setNoticeMessage(`L’Avocate protège ${target.name} : l’arrestation échoue cette nuit.`);
+            } else if (target) {
+              setJunkieImprisonedPlayerId(target.id);
+              onUpdatePlayer({ ...target, isPrisoner: true });
             }
             setJunkieAgentFlowStep(3);
             return;
@@ -357,6 +364,16 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
               message: 'Veuillez indiquer si le joueur accepte ou refuse le recrutement.',
             });
             return;
+          }
+          if (junkieRecruitmentAccepted === true) {
+            const target = players.find((p) => p.id === junkieAgentTargetId);
+            if (actingPlayer?.isPoisoned || actingPlayer?.isInformationPoisoned) {
+              setNoticeMessage('⚠️ Le Junkie est empoisonné : le recrutement simulé échoue silencieusement.');
+              setJunkieRecruitmentAccepted(false);
+            } else if (target && !target.isInformateur && target.currentTeam === 'Gang' && target.roleId !== 'homme_de_main' && target.perceivedRoleId !== 'homme_de_main' && getInformantsCount(players) < 2) {
+              onUpdatePlayer({ ...target, isInformateur: true, currentTeam: 'Forces de l’ordre' });
+              setNoticeMessage(`${target.name} devient Informateur immédiatement.`);
+            }
           }
           setJunkieAgentFlowStep(3);
           return;
