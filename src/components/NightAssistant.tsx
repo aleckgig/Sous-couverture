@@ -902,20 +902,33 @@ export const NightAssistant: React.FC<NightAssistantProps> = ({
                 </div>
               ) : (
                 <>
-                  <p className="text-center text-base sm:text-lg font-medium text-stone-800">
-                    {currentStep.roleId === 'trafiquant'
-                      ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
-                      : currentStep.instruction}
-                  </p>
-                  {currentStep.reminder && currentStep.roleId !== 'trafiquant' && (
+                  {currentStep.roleId === 'blanchisseur' ? (
+                    (() => {
+                      const trueCount = getInformantsCount(players);
+                      const falseCount = trueCount === 0 ? 1 : trueCount === 1 ? 2 : 0;
+                      return (
+                        <p className="text-center text-base sm:text-lg font-black text-stone-800">
+                          {isJunkieStep ? (
+                            <>Dites au Junkie : <span className="text-purple-700">{falseCount}</span> <span className="text-sm font-bold text-stone-500">(bonne réponse : {trueCount})</span></>
+                          ) : <>Indiquez : <span>{trueCount}</span></>}
+                        </p>
+                      );
+                    })()
+                  ) : (
+                    <p className="text-center text-base sm:text-lg font-medium text-stone-800">
+                      {currentStep.roleId === 'trafiquant'
+                        ? `Indiquez au Trafiquant ${recruitmentAcceptedTonight === true ? 'OUI' : 'NON'} : au moins une personne a-t-elle accepté un recrutement cette nuit ?`
+                        : currentStep.instruction}
+                    </p>
+                  )}
+                  {currentStep.reminder && currentStep.roleId !== 'trafiquant' && currentStep.roleId !== 'blanchisseur' && (
                     <p className="text-center text-xs italic text-stone-500 max-w-sm mx-auto">{currentStep.reminder}</p>
                   )}
-                  {isJunkieStep && (
+                  {isJunkieStep && currentStep.roleId !== 'blanchisseur' && (
                     <div className="rounded-xl border border-purple-300 bg-purple-50 px-3 py-2 text-center text-xs font-bold text-purple-900">
                       ⚠️ FAUSSE IDENTITÉ — Le Junkie croit être {role?.nom}. Son pouvoir réel s’applique normalement; toute information qu’il reçoit doit être fausse.
                     </div>
-                  )}
-                </>
+                  )}                </>
               )}
             </>
           )}
