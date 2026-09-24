@@ -28,6 +28,7 @@ import {
   ArrowLeftRight,
   Pencil,
   Move,
+  Shuffle,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Player, RoleId, StructuredRole } from '../types';
@@ -100,8 +101,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   const activeCount = Math.max(1, activePlayersList.length);
 
   const [playerRoleMap, setPlayerRoleMap] = useState<Record<number, RoleId>>({});
-  const [step2LayoutMode, setStep2LayoutMode] = useState<'circle' | 'grid'>('circle');
-
   const [rolePickerSeatIndex, setRolePickerSeatIndex] = useState<number | null>(null);
   const [rolePickerSearch, setRolePickerSearch] = useState<string>('');
   const [rolePickerCategory, setRolePickerCategory] = useState<'all' | 'gang' | 'perturbateur' | 'police'>('all');
@@ -275,7 +274,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
     setCurrentStep(2);
   };
 
-  const handleRegenerateRandomBalanced = () => {
+  const handleRandomizeRoles = () => {
     const count = activePlayersList.length;
     const balancedRoles = generateBalancedSousCouvertureRoles(count);
     const newMap: Record<number, RoleId> = {};
@@ -848,18 +847,18 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             </div>
           )}
 
-          <div className="pt-3 border-t border-stone-800 flex items-center justify-between">
+          <div className="pt-2 border-t border-stone-300 flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setCurrentStep(0)}
-              className="px-4 py-2 rounded-xl bg-stone-800 text-xs font-bold cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#e2ded5] hover:bg-[#d8d3c8] border border-stone-300 text-stone-600 font-bold text-xs cursor-pointer"
             >
               ← Retour
             </button>
             <button
               type="button"
               onClick={handleProceedToRoleAssignments}
-              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-lg"
+              className="px-5 py-2.5 rounded-2xl bg-[#b8aa91] hover:bg-[#aa9b82] border border-[#9d907a] text-stone-900 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
               <span>Attribution des Rôles</span>
               <ArrowRight className="w-4 h-4" />
@@ -883,54 +882,26 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
     return (
       <div className="max-w-4xl mx-auto space-y-3 animate-in fade-in text-stone-800">
-        <div className="bg-[#f1eadf] border border-stone-300 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-300 pb-2">
+        <div className="bg-[#f1eadf] border border-stone-300 rounded-3xl p-2.5 sm:p-3 shadow-sm space-y-2">
+          <div className="flex items-center justify-between gap-2 border-b border-stone-300 pb-1.5">
             <div>
               <span className="text-[10px] uppercase font-black tracking-widest text-stone-500">
                 Étape 2 / 3
               </span>
-              <h2 className="font-serif font-black text-xl text-stone-900">
-                Attribution des Rôles autour de la Table
+              <h2 className="font-serif font-black text-base sm:text-lg text-stone-900 whitespace-nowrap">
+                Attribution des rôles
               </h2>
-              <p className="text-xs text-stone-600 mt-0.5">
-                Déterminez qui est assis à côté de qui autour de la table pour les pouvoirs de voisinage.
-              </p>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Layout switcher */}
-              <div className="flex items-center gap-1 bg-[#e8e0d2] p-1 rounded-xl border border-stone-300 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setStep2LayoutMode('circle')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                    step2LayoutMode === 'circle'
-                      ? 'bg-[#d8c8ad] text-stone-900 font-black shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  Table Ronde
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep2LayoutMode('grid')}
-                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                    step2LayoutMode === 'grid'
-                      ? 'bg-[#d8c8ad] text-stone-900 font-black shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  Grille
-                </button>
-              </div>
-
               <button
                 type="button"
-                onClick={handleRegenerateRandomBalanced}
+                onClick={handleRandomizeRoles}
                 className="px-3 py-1.5 rounded-xl bg-[#eee6d8] border border-stone-300 text-stone-700 text-xs font-bold flex items-center gap-1 hover:bg-white cursor-pointer"
-                title="Générer une répartition aléatoire équilibrée"
+                title="Répartir les rôles aléatoirement"
               >
-                <span>Rééquilibrer</span>
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>Aléatoire</span>
               </button>
             </div>
           </div>
@@ -955,9 +926,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           )}
 
           {/* CIRCLE LAYOUT: Around the table */}
-          {step2LayoutMode === 'circle' ? (
             <div
-              className="relative w-full aspect-square max-w-[560px] mx-auto my-1 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]" style={{ backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)" }}
+              className="relative w-full aspect-square max-w-[680px] mx-auto my-0 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]" style={{ backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)" }}
             >
               {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
@@ -977,8 +947,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 {activePlayersList.map((playerName, seatIdx) => {
                   const total = activePlayersList.length;
                   const angle = (seatIdx / total) * 2 * Math.PI - Math.PI / 2;
-                  const rx = total > 12 ? 40 : 41;
-                  const ry = total > 12 ? 39 : 41;
+                  const rx = total > 12 ? 42 : 43;
+                  const ry = total > 12 ? 41 : 43;
                   const x = 50 + rx * Math.cos(angle);
                   const y = 50 + ry * Math.sin(angle);
 
@@ -1083,8 +1053,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                         }}
                         className={`group relative touch-none cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
                           total > 12
-                            ? 'w-[58px] xs:w-[64px] sm:w-[82px] md:w-[92px]'
-                            : 'w-[68px] xs:w-[74px] sm:w-[92px] md:w-[104px]'
+                            ? 'w-[54px] xs:w-[60px] sm:w-[78px] md:w-[88px]'
+                            : 'w-[62px] xs:w-[68px] sm:w-[88px] md:w-[100px]'
                         } ${
                           isDragged
                             ? 'opacity-30 scale-95'
@@ -1173,189 +1143,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                 })}
               </div>
             </div>
-          ) : (
-            /* GRID OF SEATED PLAYERS */
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-              {activePlayersList.map((playerName, seatIdx) => {
-                const assignedRoleId = playerRoleMap[seatIdx] || 'guetteur';
-                const roleInfo = ROLES[assignedRoleId];
-                const isAgent = assignedRoleId === 'agent_sous_couverture';
-                const isFaussePisteThisSeat = isHackerSelected && seatIdx === faussePisteSeatIndex;
-                const isDragged = draggedSeatIndex === seatIdx;
-                const isDragTarget =
-                  dragOverSeatIndex === seatIdx &&
-                  draggedSeatIndex !== null &&
-                  draggedSeatIndex !== seatIdx;
-                const isSwapSource = swapActiveSeatIndex === seatIdx;
-
-                return (
-                  <div
-                    key={seatIdx}
-                    data-seat-index={seatIdx}
-                    draggable={true}
-                    onDragStart={(e) => {
-                      setDraggedSeatIndex(seatIdx);
-                      e.dataTransfer.setData('text/plain', String(seatIdx));
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = 'move';
-                      if (dragOverSeatIndex !== seatIdx) {
-                        setDragOverSeatIndex(seatIdx);
-                      }
-                    }}
-                    onDragEnter={(e) => {
-                      e.preventDefault();
-                      setDragOverSeatIndex(seatIdx);
-                    }}
-                    onDragLeave={() => {
-                      if (dragOverSeatIndex === seatIdx) {
-                        setDragOverSeatIndex(null);
-                      }
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const sourceIdx =
-                        draggedSeatIndex ?? Number(e.dataTransfer.getData('text/plain'));
-                      if (!isNaN(sourceIdx)) {
-                        handleSwapSeats(sourceIdx, seatIdx);
-                      }
-                      setDraggedSeatIndex(null);
-                      setDragOverSeatIndex(null);
-                    }}
-                    onDragEnd={() => {
-                      setDraggedSeatIndex(null);
-                      setDragOverSeatIndex(null);
-                    }}
-                    onTouchStart={(e) => handleSeatTouchStart(seatIdx, e)}
-                    onTouchMove={handleSeatTouchMove}
-                    onTouchEnd={handleSeatTouchEnd}
-                    onTouchCancel={handleSeatTouchCancel}
-                    onClick={() => {
-                      if (!isTouchDraggingRef.current) {
-                        if (swapActiveSeatIndex !== null) {
-                          if (swapActiveSeatIndex === seatIdx) {
-                            setSwapActiveSeatIndex(null);
-                          } else {
-                            handleSwapSeats(swapActiveSeatIndex, seatIdx);
-                          }
-                        } else {
-                          setRolePickerSearch('');
-                          setRolePickerCategory('all');
-                          setRolePickerSeatIndex(seatIdx);
-                        }
-                      }
-                    }}
-                    className={`relative p-2 rounded-2xl border text-left cursor-grab active:cursor-grabbing transition-all select-none shadow-md touch-none ${
-                      isDragged
-                        ? 'opacity-30 scale-95 border-dashed border-stone-500 ring-2 ring-stone-400/60'
-                        : isSwapSource
-                        ? 'scale-105 ring-4 ring-stone-500 border-stone-500 bg-[#e8e0d2] animate-pulse'
-                        : isDragTarget
-                        ? 'scale-105 ring-4 ring-stone-500 bg-[#e8e0d2] border-stone-500'
-                        : 'bg-[#eee6d8] border-stone-300 text-stone-800 hover:border-stone-500 hover:scale-102'
-                    }`}
-                  >
-                    {isDragTarget && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#d8c8ad] text-stone-900 font-black text-[9px] shadow-lg whitespace-nowrap z-50">
-                        ⇄ Échanger
-                      </div>
-                    )}
-                    {isSwapSource && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#d8c8ad] text-stone-900 font-black text-[9px] shadow-lg whitespace-nowrap z-50 animate-bounce">
-                        ⇄ En cours
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-stone-400">
-                        Siège #{seatIdx + 1}
-                      </span>
-                      {isFaussePisteThisSeat && (
-                        <span className="text-xs" title="Fausse Piste (Hacker en jeu)">
-                          🎯
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="mt-0.5 truncate">
-                      <span className="font-bold text-sm text-white truncate block">
-                        {playerName}
-                      </span>
-                    </div>
-
-                    <div className="text-xs font-bold truncate mt-1 text-stone-300">
-                      {roleInfo?.nom || assignedRoleId}
-                    </div>
-
-                    <div className="flex items-center justify-between mt-2 pt-1 border-t border-stone-800">
-                      <span
-                        className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                          isAgent
-                            ? 'bg-blue-900/90 text-blue-200 border border-blue-700/60'
-                            : roleInfo?.isPerturbateur
-                            ? 'bg-purple-900/90 text-purple-200 border border-purple-700/60'
-                            : 'bg-red-900/80 text-red-200 border border-red-700/60'
-                        }`}
-                      >
-                        {isAgent
-                          ? "Forces de l'ordre"
-                          : roleInfo?.isPerturbateur
-                          ? 'Perturbateur'
-                          : 'Gang'}
-                      </span>
-
-                      {/* Action buttons: Pencil and Move */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          title="Modifier le rôle (Crayon)"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (swapActiveSeatIndex !== null) {
-                              handleSwapSeats(swapActiveSeatIndex, seatIdx);
-                            } else {
-                              setRolePickerSearch('');
-                              setRolePickerCategory('all');
-                              setRolePickerSeatIndex(seatIdx);
-                            }
-                          }}
-                          className="p-1 rounded-md hover:bg-stone-800 text-stone-400 hover:text-amber-300 transition-colors cursor-pointer"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          type="button"
-                          title="Glisser-déposer ou toucher pour échanger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleSwapSeat(seatIdx);
-                          }}
-                          onTouchStart={(e) => {
-                            e.stopPropagation();
-                            handleSeatTouchStart(seatIdx, e);
-                          }}
-                          onTouchMove={handleSeatTouchMove}
-                          onTouchEnd={handleSeatTouchEnd}
-                          onTouchCancel={handleSeatTouchCancel}
-                          className={`p-1 rounded-md transition-colors cursor-grab active:cursor-grabbing touch-none ${
-                            isSwapSource
-                              ? 'bg-amber-400 text-stone-950 ring-2 ring-amber-300'
-                              : 'hover:bg-stone-800 text-stone-400 hover:text-amber-300'
-                          }`}
-                        >
-                          <Move className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
           <div className="pt-3 border-t border-stone-800 flex items-center justify-between">
             <button
               type="button"
@@ -1369,7 +1156,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
               onClick={handleProceedToSecrets}
               className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-lg"
             >
-              <span>Configurations Spéciales</span>
+              <span>Configurations spéciales</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1385,7 +1172,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-mono font-bold text-amber-400">
+              <span className="text-[9px] font-mono font-bold text-stone-600">
                 #{draggedSeatIndex + 1}
               </span>
               <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-[#d8c8ad] text-stone-900">
@@ -1395,7 +1182,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
             <div className="font-bold text-xs text-white truncate mt-1">
               {activePlayersList[draggedSeatIndex]}
             </div>
-            <div className="text-[10px] font-bold text-amber-300 truncate">
+            <div className="text-[10px] font-bold text-stone-700 truncate">
               {ROLES[playerRoleMap[draggedSeatIndex]]?.nom || playerRoleMap[draggedSeatIndex]}
             </div>
           </div>
