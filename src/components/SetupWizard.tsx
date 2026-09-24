@@ -112,6 +112,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   const [floatingTouchPos, setFloatingTouchPos] = useState<{ x: number; y: number } | null>(null);
   const touchStartPosRef = useRef<{ x: number; y: number; seatIdx: number } | null>(null);
   const isTouchDraggingRef = useRef<boolean>(false);
+  const ignoreNextSeatClickRef = useRef<boolean>(false);
 
   const [faussePisteSeatIndex, setFaussePisteSeatIndex] = useState<number>(0);
   const [junkiePerceivedRoleId, setJunkiePerceivedRoleId] = useState<RoleId | ''>('');
@@ -337,6 +338,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
         e.preventDefault();
       }
       isTouchDraggingRef.current = true;
+      ignoreNextSeatClickRef.current = true;
       setDraggedSeatIndex(touchStartPosRef.current.seatIdx);
       setFloatingTouchPos({ x: touch.clientX, y: touch.clientY });
 
@@ -613,15 +615,15 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
   // STEP 0: WELCOME & MODE SELECTION
   if (currentStep === 0) {
     return (
-      <div className="w-full max-w-lg mx-auto flex flex-col items-center justify-center min-h-[70vh] px-4 py-4 space-y-6 animate-in fade-in select-none text-stone-100">
+      <div className="w-full max-w-lg mx-auto flex flex-col items-center justify-center min-h-[70vh] px-4 py-4 space-y-6 animate-in fade-in select-none text-stone-800">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-4xl mx-auto shadow-xl">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border-2 border-stone-400 flex items-center justify-center text-4xl mx-auto shadow-xl">
             🕵️‍♂️
           </div>
-          <h1 className="font-serif font-black text-3xl sm:text-4xl text-amber-300 tracking-wide">
+          <h1 className="font-serif font-black text-3xl sm:text-4xl text-stone-600 tracking-wide">
             Sous Couverture
           </h1>
-          <p className="text-stone-300 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+          <p className="text-stone-600 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
             Application compagnon officielle pour le jeu de déduction du crime organisé.
           </p>
         </div>
@@ -657,7 +659,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           <button
             type="button"
             onClick={() => setIsImageManagerOpen(true)}
-            className="flex-1 py-2.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="flex-1 py-2.5 px-3 rounded-xl bg-[#eee6d8] hover:bg-white border border-stone-300 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <ImageIcon className="w-4 h-4" />
             <span>Illustrations des cartes</span>
@@ -682,7 +684,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
               setCurrentStep(1);
             }}
             disabled={isCreatingRoom}
-            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-serif font-black text-base shadow-xl shadow-amber-950/50 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="w-full py-4 px-6 rounded-2xl bg-[#d8c8ad] hover:bg-[#cdbb9b] text-stone-900 font-serif font-black text-base shadow-xl shadow-amber-950/50 flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <span>Configurer la Table</span>
             <ArrowRight className="w-5 h-5" />
@@ -702,7 +704,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
         <div className="bg-[#f4efe4] border border-stone-300 rounded-3xl p-3 sm:p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between border-b border-stone-800 pb-3">
             <div>
-              <span className="text-[10px] uppercase font-black tracking-widest text-amber-400">
+              <span className="text-[10px] uppercase font-black tracking-widest text-stone-700">
                 Étape 1 / 3
               </span>
               <h2 className="font-serif font-black text-xl text-stone-900">
@@ -750,12 +752,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                   onChange={(e) => setNewPlayerInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
                   placeholder="Nom du joueur..."
-                  className="flex-1 bg-stone-950 border border-stone-800 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:border-amber-500"
+                  className="flex-1 bg-[#f4efe4] border border-stone-300 rounded-2xl px-4 py-2.5 text-xs text-white outline-none focus:border-amber-500"
                 />
                 <button
                   type="button"
                   onClick={handleAddPlayer}
-                  className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs cursor-pointer shadow"
+                  className="px-4 py-2.5 rounded-2xl bg-[#d8c8ad] hover:bg-[#cdbb9b] text-stone-900 font-black text-xs cursor-pointer shadow"
                 >
                   Ajouter
                 </button>
@@ -843,13 +845,13 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
 
     return (
       <div className="max-w-4xl mx-auto space-y-3 animate-in fade-in text-stone-800">
-        <div className="bg-stone-900 border-2 border-stone-800 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+        <div className="bg-[#f1eadf] border border-stone-300 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-300 pb-2">
             <div>
               <span className="text-[10px] uppercase font-black tracking-widest text-stone-500">
                 Étape 2 / 3
               </span>
-              <h2 className="font-serif font-black text-xl text-white">
+              <h2 className="font-serif font-black text-xl text-stone-900">
                 Attribution des Rôles autour de la Table
               </h2>
               <p className="text-xs text-stone-600 mt-0.5">
@@ -876,8 +878,8 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                   onClick={() => setStep2LayoutMode('grid')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                     step2LayoutMode === 'grid'
-                      ? 'bg-amber-500 text-stone-950 font-black shadow'
-                      : 'text-stone-400 hover:text-white'
+                      ? 'bg-[#d8c8ad] text-stone-900 font-black shadow-sm'
+                      : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
                   Grille
@@ -917,7 +919,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           {/* CIRCLE LAYOUT: Around the table */}
           {step2LayoutMode === 'circle' ? (
             <div
-              className="relative w-full aspect-square max-w-[560px] mx-auto my-1 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#e9dfcf]"
+              className="relative w-full aspect-square max-w-[560px] mx-auto my-1 rounded-[2rem] border border-stone-300 shadow-sm overflow-visible bg-[#d6c2a5]" style={{ backgroundImage: "repeating-linear-gradient(8deg, rgba(92,68,43,0.08) 0px, rgba(92,68,43,0.08) 1px, transparent 1px, transparent 7px), repeating-linear-gradient(82deg, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 1px, transparent 1px, transparent 11px)" }}
             >
               {/* Table Center */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
@@ -1023,6 +1025,10 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                         onTouchEnd={handleSeatTouchEnd}
                         onTouchCancel={handleSeatTouchCancel}
                         onClick={() => {
+                          if (ignoreNextSeatClickRef.current) {
+                            ignoreNextSeatClickRef.current = false;
+                            return;
+                          }
                           if (!isTouchDraggingRef.current) {
                             if (swapActiveSeatIndex !== null) {
                               if (swapActiveSeatIndex === seatIdx) {
@@ -1111,15 +1117,15 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                           onTouchCancel={handleSeatTouchCancel}
                           className={`absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border shadow-lg flex items-center justify-center cursor-grab touch-none transition-colors ${
                             isSwapSource
-                              ? 'bg-amber-400 text-stone-950 border-amber-200'
-                              : 'bg-stone-950/95 text-stone-300 border-stone-600 hover:text-amber-300 hover:border-amber-400'
+                              ? 'bg-[#d8c8ad] text-stone-900 border-stone-300'
+                              : 'bg-[#f4efe4] text-stone-700 border-stone-400 hover:text-stone-900 hover:border-stone-600'
                           }`}
                         >
                           <Move className="w-3 h-3" />
                         </button>
 
                         {isDragTarget && (
-                          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-amber-500 text-stone-950 font-black text-[8px] shadow-lg whitespace-nowrap z-50">
+                          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-[#d8c8ad] text-stone-900 font-black text-[8px] shadow-lg whitespace-nowrap z-50">
                             ⇄ Échanger
                           </div>
                         )}
@@ -1219,7 +1225,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
                       </div>
                     )}
                     {isSwapSource && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-400 text-stone-950 font-black text-[9px] shadow-lg whitespace-nowrap z-50 animate-bounce">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#d8c8ad] text-stone-900 font-black text-[9px] shadow-lg whitespace-nowrap z-50 animate-bounce">
                         ⇄ En cours
                       </div>
                     )}
@@ -1334,7 +1340,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
         {/* Floating follower element while dragging on touch/mobile */}
         {draggedSeatIndex !== null && floatingTouchPos !== null && (
           <div
-            className="fixed pointer-events-none z-[99999] -translate-x-1/2 -translate-y-1/2 w-28 p-2.5 rounded-2xl border-2 border-amber-400 bg-stone-950/95 text-stone-100 shadow-2xl backdrop-blur-md ring-4 ring-amber-400/50 select-none scale-105"
+            className="fixed pointer-events-none z-[99999] -translate-x-1/2 -translate-y-1/2 w-28 p-2.5 rounded-2xl border-2 border-stone-400 bg-[#f4efe4] text-stone-100 shadow-2xl backdrop-blur-md ring-4 ring-stone-300/70 select-none scale-105"
             style={{
               left: `${floatingTouchPos.x}px`,
               top: `${floatingTouchPos.y}px`,
@@ -1344,7 +1350,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
               <span className="text-[9px] font-mono font-bold text-amber-400">
                 #{draggedSeatIndex + 1}
               </span>
-              <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-amber-500 text-stone-950">
+              <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-[#d8c8ad] text-stone-900">
                 ⇄ Échanger
               </span>
             </div>
@@ -1705,7 +1711,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onCompleteSetup }) => 
           <button
             type="button"
             onClick={() => setIsImageManagerOpen(true)}
-            className="p-3 bg-stone-950 hover:bg-stone-800 border border-amber-500/40 rounded-2xl text-xs text-amber-300 font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="p-3 bg-[#f4efe4] hover:bg-white border border-amber-500/40 rounded-2xl text-xs text-amber-300 font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <ImageIcon className="w-4 h-4" />
             <span>Gérer les Cartes</span>
